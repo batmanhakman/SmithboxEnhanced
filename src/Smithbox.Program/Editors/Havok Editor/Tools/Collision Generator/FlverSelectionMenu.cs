@@ -1,5 +1,4 @@
 ﻿using Hexa.NET.ImGui;
-using Octokit;
 using SoulsFormats;
 using StudioCore.Editors.Common;
 using StudioCore.Editors.MetadataEditor;
@@ -7,6 +6,8 @@ using StudioCore.Editors.ModelEditor;
 using StudioCore.Keybinds;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -19,7 +20,36 @@ public class FlverSelectionMenu
 
     public string FlverPath = "";
     public FLVER2 SourceFlver = null;
+    public FLVER0 SourceFlver0 = null;
     public bool[] FlverMeshSelection = Array.Empty<bool>();
+
+    public bool HasSourceModel => SourceFlver != null || SourceFlver0 != null;
+
+    public int MeshCount => SourceFlver != null ? SourceFlver.Meshes.Count : (SourceFlver0 != null ? SourceFlver0.Meshes.Count : 0);
+
+    public string GetMeshMaterialName(int index)
+    {
+        if (SourceFlver != null && index >= 0 && index < SourceFlver.Meshes.Count)
+        {
+            var matIdx = SourceFlver.Meshes[index].MaterialIndex;
+            return matIdx >= 0 && matIdx < SourceFlver.Materials.Count ? SourceFlver.Materials[matIdx].Name : "";
+        }
+        if (SourceFlver0 != null && index >= 0 && index < SourceFlver0.Meshes.Count)
+        {
+            var matIdx = SourceFlver0.Meshes[index].MaterialIndex;
+            return matIdx >= 0 && matIdx < SourceFlver0.Materials.Count ? SourceFlver0.Materials[matIdx].Name : "";
+        }
+        return "";
+    }
+
+    public int GetMeshVertexCount(int index)
+    {
+        if (SourceFlver != null && index >= 0 && index < SourceFlver.Meshes.Count)
+            return SourceFlver.Meshes[index].Vertices.Count;
+        if (SourceFlver0 != null && index >= 0 && index < SourceFlver0.Meshes.Count)
+            return SourceFlver0.Meshes[index].Vertices.Count;
+        return 0;
+    }
 
     public bool TriggerFlverSelectionMenu = false;
     private bool UpdateFlverSelectionList = true;
@@ -80,6 +110,32 @@ public class FlverSelectionMenu
             ImGui.EndTabItem();
         }
 
+        // Characters
+        if (ImGui.BeginTabItem($"{LOC.Get("MODEL_ENUM_ModelListType_Characters")}##characterTab"))
+        {
+            CurrentTab = ModelListType.Character;
+
+            ImGui.BeginChild($"chrSourceList", new Vector2(0, 0), ImGuiChildFlags.Borders);
+
+            DisplayModelSourceList(ModelListType.Character, Project.Locator.ChrFiles);
+
+            ImGui.EndChild();
+            ImGui.EndTabItem();
+        }
+
+        // Parts
+        if (ImGui.BeginTabItem($"{LOC.Get("MODEL_ENUM_ModelListType_Parts")}##partTab"))
+        {
+            CurrentTab = ModelListType.Part;
+
+            ImGui.BeginChild($"partSourceList", new Vector2(0, 0), ImGuiChildFlags.Borders);
+
+            DisplayModelSourceList(ModelListType.Part, Project.Locator.PartFiles);
+
+            ImGui.EndChild();
+            ImGui.EndTabItem();
+        }
+
         ImGui.EndTabBar();
 
         ImGui.EndChild();
@@ -89,6 +145,8 @@ public class FlverSelectionMenu
     {
         { ModelListType.Asset,     ProjectAliasType.Assets     },
         { ModelListType.MapPiece,  ProjectAliasType.MapPieces  },
+        { ModelListType.Character, ProjectAliasType.Characters },
+        { ModelListType.Part,      ProjectAliasType.Parts      },
     };
 
     public void DisplayFlverSelectionHeader()
@@ -125,6 +183,8 @@ public class FlverSelectionMenu
         {
             ModelListType.Asset => Project.Locator.AssetFiles,
             ModelListType.MapPiece => Project.Locator.MapPieceFiles,
+            ModelListType.Character => Project.Locator.ChrFiles,
+            ModelListType.Part => Project.Locator.PartFiles,
             _ => null
         };
         if (fileDict == null) return;
@@ -139,7 +199,7 @@ public class FlverSelectionMenu
             if (CFG.Current.ModelEditor_Containers_IncludeAliasInSearch
                 && AliasTypeMap.TryGetValue(CurrentTab, out var aliasType))
             {
-                nameAlias = AliasHelper.GetAlias(Project, modelName, CurrentTab); // collapsed below
+                nameAlias = AliasHelper.GetAlias(Project, modelName, CurrentTab);
             }
 
             if (EditorFilters.IsMatch(FlverListFilter, modelName, ExactFlverListFilter, nameAlias, true, true))
@@ -222,7 +282,7 @@ public class FlverSelectionMenu
         }
         else if (binderType is ResourceContainerType.BND)
         {
-            ReadBND4(fileEntry);
+            ReadBND(fileEntry);
         }
         else if (binderType is ResourceContainerType.BXF)
         {
@@ -250,7 +310,7 @@ public class FlverSelectionMenu
         }
     }
 
-    public void ReadBND4(FileDictionaryEntry fileEntry)
+    public void ReadBND(FileDictionaryEntry fileEntry)
     {
         if (Project.VFS.FS.FileExists(fileEntry.Path))
         {
@@ -260,16 +320,38 @@ public class FlverSelectionMenu
 
                 if (fileData != null)
                 {
-                    var binder = new BND4Reader(fileData.Value);
+                    byte[] bytes = fileData.Value.ToArray();
+                    if (DCX.Is(bytes))
+                        bytes = DCX.Decompress(bytes).ToArray();
 
-                    foreach (var file in binder.Files)
+                    if (BND4.Is(bytes))
                     {
-                        var filename = FilePathUtils.GetPureFilename(file.Name);
-                        var filepath = file.Name.ToLower();
-
-                        if(filename.ToLower() == fileEntry.Filename.ToLower())
+                        var binder = new BND4Reader(bytes);
+                        foreach (var file in binder.Files)
                         {
-                            LoadFlverFile(fileEntry, binder.ReadFile(file));
+                            var filename = FilePathUtils.GetPureFilename(file.Name);
+                            if (string.Equals(filename, fileEntry.Filename, StringComparison.OrdinalIgnoreCase) ||
+                                file.Name.EndsWith(".flver", StringComparison.OrdinalIgnoreCase) ||
+                                file.Name.EndsWith(".flv", StringComparison.OrdinalIgnoreCase))
+                            {
+                                LoadFlverFile(fileEntry, binder.ReadFile(file));
+                                return;
+                            }
+                        }
+                    }
+                    else if (BND3.Is(bytes))
+                    {
+                        using var binder = new BND3Reader(bytes);
+                        foreach (var file in binder.Files)
+                        {
+                            var filename = FilePathUtils.GetPureFilename(file.Name);
+                            if (string.Equals(filename, fileEntry.Filename, StringComparison.OrdinalIgnoreCase) ||
+                                file.Name.EndsWith(".flver", StringComparison.OrdinalIgnoreCase) ||
+                                file.Name.EndsWith(".flv", StringComparison.OrdinalIgnoreCase))
+                            {
+                                LoadFlverFile(fileEntry, binder.ReadFile(file));
+                                return;
+                            }
                         }
                     }
                 }
@@ -293,7 +375,7 @@ public class FlverSelectionMenu
         var targetBhdPath = fileEntry.Path;
         var targetBdtPath = fileEntry.Path.Replace("bhd", "bdt");
 
-        if (Project.VFS.FS.FileExists(targetBhdPath) && Project.VFS.FS.FileExists(targetBhdPath))
+        if (Project.VFS.FS.FileExists(targetBhdPath) && Project.VFS.FS.FileExists(targetBdtPath))
         {
             bhd = (Memory<byte>)Project.VFS.FS.ReadFile(targetBhdPath);
             bdt = (Memory<byte>)Project.VFS.FS.ReadFile(targetBdtPath);
@@ -301,7 +383,7 @@ public class FlverSelectionMenu
             if (bhd.Length == 0 || bdt.Length == 0)
                 return;
 
-            PopulateBXF4(fileEntry, bhd, bdt);
+            PopulateBXF(fileEntry, bhd, bdt);
         }
         else
         {
@@ -309,30 +391,84 @@ public class FlverSelectionMenu
         }
     }
 
-    public void PopulateBXF4(FileDictionaryEntry fileEntry, Memory<byte> bhdData, Memory<byte> bdtData)
+    public void PopulateBXF(FileDictionaryEntry fileEntry, Memory<byte> bhdData, Memory<byte> bdtData)
     {
-        var binder = new BXF4Reader(bhdData, bdtData);
-
-        foreach (var file in binder.Files)
+        try
         {
-            var filename = FilePathUtils.GetPureFilename(file.Name);
-            var filepath = file.Name.ToLower();
+            var bhdBytes = bhdData.ToArray();
+            var bdtBytes = bdtData.ToArray();
 
-            if (filename.ToLower() == fileEntry.Filename.ToLower())
+            if (BXF4.IsBHD(bhdBytes))
             {
-                LoadFlverFile(fileEntry, binder.ReadFile(file));
+                var binder = new BXF4Reader(bhdBytes, bdtBytes);
+                foreach (var file in binder.Files)
+                {
+                    var filename = FilePathUtils.GetPureFilename(file.Name);
+                    if (string.Equals(filename, fileEntry.Filename, StringComparison.OrdinalIgnoreCase) ||
+                        file.Name.EndsWith(".flver", StringComparison.OrdinalIgnoreCase) ||
+                        file.Name.EndsWith(".flv", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LoadFlverFile(fileEntry, binder.ReadFile(file));
+                        return;
+                    }
+                }
             }
+            else
+            {
+                var binder = BXF3.Read(bhdBytes, bdtBytes);
+                foreach (var file in binder.Files)
+                {
+                    var filename = FilePathUtils.GetPureFilename(file.Name);
+                    if (string.Equals(filename, fileEntry.Filename, StringComparison.OrdinalIgnoreCase) ||
+                        file.Name.EndsWith(".flver", StringComparison.OrdinalIgnoreCase) ||
+                        file.Name.EndsWith(".flv", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LoadFlverFile(fileEntry, file.Bytes);
+                        return;
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Smithbox.LogError(this, LOC.Get("HAVOK_CollisionGen_Failed_Binder_Read", fileEntry.Path), e);
         }
     }
 
     public void LoadFlverFile(FileDictionaryEntry fileEntry, Memory<byte>? fileData)
     {
+        if (fileData == null || fileData.Value.Length == 0)
+            return;
+
         try
         {
-            SourceFlver = FLVER2.Read(fileData.Value);
+            byte[] bytes = fileData.Value.ToArray();
+            if (DCX.Is(bytes))
+                bytes = DCX.Decompress(bytes).ToArray();
+
+            if (bytes.Length < 12 || !ModelCollisionExtractor.IsFlverBytes(bytes))
+                return;
+
+            var bigEndian = bytes[6] == 'B';
+            var version = bigEndian
+                ? (bytes[8] << 24) | (bytes[9] << 16) | (bytes[10] << 8) | bytes[11]
+                : (bytes[11] << 24) | (bytes[10] << 16) | (bytes[9] << 8) | bytes[8];
+
+            SourceFlver = null;
+            SourceFlver0 = null;
+
+            if (version >= 0x20000)
+            {
+                SourceFlver = FLVER2.Read(bytes);
+                FlverMeshSelection = new bool[SourceFlver.Meshes.Count];
+            }
+            else
+            {
+                SourceFlver0 = FLVER0.Read(bytes);
+                FlverMeshSelection = new bool[SourceFlver0.Meshes.Count];
+            }
 
             FlverPath = fileEntry.Path;
-            FlverMeshSelection = new bool[SourceFlver.Meshes.Count];
             Array.Fill(FlverMeshSelection, true);
 
             ImGui.CloseCurrentPopup();

@@ -45,6 +45,11 @@ public class CollisionGeneratorTool
     public string ObjPath = "";
     public bool[] ObjGroupSelection = [];
 
+    /// <summary>
+    /// Validation and extraction statistics from the most recent model extraction
+    /// </summary>
+    public ModelCollisionStats LastStats;
+
     public CollisionGeneratorTool(HavokEditorView view, ProjectEntry project)
     {
         View = view;
@@ -286,7 +291,7 @@ public class CollisionGeneratorTool
                 GUI.WrappedText(LOC.Get("HAVOK_CollisionGen_Flver_Current_Source_FLVER_None"));
             }
 
-            if (SelectionMenu.SourceFlver != null)
+            if (SelectionMenu.HasSourceModel)
             {
                 GUI.Spacer();
                 GUI.ConditionalHeader(
@@ -317,6 +322,11 @@ public class CollisionGeneratorTool
             DisplayObjParameters();
         }
 
+        if (TargetShape is CollisionGeneratorShape.FLVER or CollisionGeneratorShape.OBJ)
+        {
+            DisplayExtractionOptions();
+        }
+
         DisplayPreview();
 
         // Actions
@@ -341,16 +351,16 @@ public class CollisionGeneratorTool
     {
         ImGui.BeginChild("flverMeshSelectionList", new Vector2(0, 150), ImGuiChildFlags.Borders);
 
-        for (int i = 0; i < SelectionMenu.SourceFlver.Meshes.Count; i++)
+        for (int i = 0; i < SelectionMenu.MeshCount; i++)
         {
-            var mesh = SelectionMenu.SourceFlver.Meshes[i];
-            var material = SelectionMenu.SourceFlver.Materials[mesh.MaterialIndex];
-            var label = LOC.Get("HAVOK_CollisionGen_Flver_Mesh_Entry", i, material.Name, mesh.Vertices.Count);
+            var matName = SelectionMenu.GetMeshMaterialName(i);
+            var vertCount = SelectionMenu.GetMeshVertexCount(i);
+            var label = LOC.Get("HAVOK_CollisionGen_Flver_Mesh_Entry", i, matName, vertCount);
 
             // Each mesh says which material it will get: its own hkm_ name, or the Collision Material setting
             if (IsCompressedMesh)
             {
-                label = HavokCollisionMaterials.TryParse(material.Name, out var meshMaterial)
+                label = HavokCollisionMaterials.TryParse(matName, out var meshMaterial)
                     ? LOC.Get("HAVOK_CollisionGen_Flver_Mesh_Entry_Material", label, MaterialPicker.Describe(meshMaterial))
                     : LOC.Get("HAVOK_CollisionGen_Flver_Mesh_Entry_Default_Material", label, MaterialPicker.Describe((uint)MaterialId));
             }
@@ -363,6 +373,46 @@ public class CollisionGeneratorTool
         }
 
         ImGui.EndChild();
+    }
+
+    /// <summary>
+    /// Geometry extraction options for model-to-collision conversion: node transforms, vertex welding, degenerate removal, validation.
+    /// </summary>
+    private void DisplayExtractionOptions()
+    {
+        GUI.Spacer();
+        GUI.ConditionalHeader(
+            "Geometry Extraction Options",
+            "Configure vertex welding, transformation evaluation, and geometry validation during collision extraction.",
+            ref CFG.Current.HavokEditor_CollisionGen_Show_Extraction_Options);
+
+        if (!CFG.Current.HavokEditor_CollisionGen_Show_Extraction_Options)
+            return;
+
+        if (TargetShape is CollisionGeneratorShape.FLVER)
+        {
+            ImGui.Checkbox("Apply Node Transforms##flverApplyNodeTransforms", ref CFG.Current.HavokEditor_CollisionGen_Flver_ApplyNodeTransforms);
+            GUI.Tooltip("Evaluates the model node and bone hierarchy to position submeshes accurately in model space.");
+        }
+
+        ImGui.Checkbox("Weld Duplicate Vertices##flverWeldVertices", ref CFG.Current.HavokEditor_CollisionGen_Flver_WeldVertices);
+        GUI.Tooltip("Deduplicates vertices sharing identical positions within the weld tolerance to produce continuous collision geometry.");
+
+        if (CFG.Current.HavokEditor_CollisionGen_Flver_WeldVertices)
+        {
+            var tol = CFG.Current.HavokEditor_CollisionGen_Flver_WeldTolerance;
+            if (ImGui.InputFloat("Weld Tolerance##flverWeldTolerance", ref tol, 0.0001f, 0.001f, "%.5f"))
+            {
+                CFG.Current.HavokEditor_CollisionGen_Flver_WeldTolerance = MathF.Max(tol, 0.00001f);
+            }
+            GUI.Tooltip("Maximum distance between vertex positions to be considered duplicate and merged.");
+        }
+
+        ImGui.Checkbox("Remove Degenerate Triangles##flverRemoveDegenerates", ref CFG.Current.HavokEditor_CollisionGen_Flver_RemoveDegenerates);
+        GUI.Tooltip("Detects and excludes zero-area, collinear, coincident, and extreme needle triangles that can crash Havok collision builders.");
+
+        ImGui.Checkbox("Validate Geometry (Filter NaN/Inf)##flverRemoveInvalid", ref CFG.Current.HavokEditor_CollisionGen_Flver_RemoveInvalidGeometry);
+        GUI.Tooltip("Filters out corrupt vertex coordinates (NaN, Infinity, extreme values) and bad indices.");
     }
 
     /// <summary>
@@ -579,11 +629,37 @@ public class CollisionGeneratorTool
             try
             {
                 var fileData = File.ReadAllBytes(path);
-                SelectionMenu.SourceFlver = FLVER2.Read(fileData);
+                if (DCX.Is(fileData))
+                    fileData = DCX.Decompress(fileData).ToArray();
 
-                SelectionMenu.FlverPath = path;
-                SelectionMenu.FlverMeshSelection = new bool[SelectionMenu.SourceFlver.Meshes.Count];
-                Array.Fill(SelectionMenu.FlverMeshSelection, true);
+                SelectionMenu.SourceFlver = null;
+                SelectionMenu.SourceFlver0 = null;
+
+                if (fileData.Length >= 12 && ModelCollisionExtractor.IsFlverBytes(fileData))
+                {
+                    var bigEndian = fileData[6] == 'B';
+                    var version = bigEndian
+                        ? (fileData[8] << 24) | (fileData[9] << 16) | (fileData[10] << 8) | fileData[11]
+                        : (fileData[11] << 24) | (fileData[10] << 16) | (fileData[9] << 8) | fileData[8];
+
+                    if (version >= 0x20000)
+                    {
+                        SelectionMenu.SourceFlver = FLVER2.Read(fileData);
+                        SelectionMenu.FlverMeshSelection = new bool[SelectionMenu.SourceFlver.Meshes.Count];
+                    }
+                    else
+                    {
+                        SelectionMenu.SourceFlver0 = FLVER0.Read(fileData);
+                        SelectionMenu.FlverMeshSelection = new bool[SelectionMenu.SourceFlver0.Meshes.Count];
+                    }
+
+                    SelectionMenu.FlverPath = path;
+                    Array.Fill(SelectionMenu.FlverMeshSelection, true);
+                }
+                else
+                {
+                    Smithbox.LogError(this, LOC.Get("HAVOK_CollisionGen_Failed_FLVER_Read", path));
+                }
             }
             catch (Exception ex)
             {
@@ -629,7 +705,7 @@ public class CollisionGeneratorTool
         }
         else if (TargetShape is CollisionGeneratorShape.FLVER)
         {
-            if (SelectionMenu.SourceFlver == null || SelectionMenu.FlverMeshSelection.Length == 0)
+            if (!SelectionMenu.HasSourceModel || SelectionMenu.FlverMeshSelection.Length == 0)
                 return false;
 
             var selectedMeshIndices = new List<int>();
@@ -642,17 +718,25 @@ public class CollisionGeneratorTool
             if (selectedMeshIndices.Count == 0)
                 return false;
 
-            // A mesh whose material is named hkm_Name_Property gets that collision material
-            var flver = SelectionMenu.SourceFlver;
-            var materials = new List<uint>();
-            uint MeshMaterial(int meshIndex)
+            var options = new ModelCollisionExtractionOptions
             {
-                var materialName = flver.Materials[flver.Meshes[meshIndex].MaterialIndex].Name;
-                return HavokCollisionMaterials.TryParse(materialName, out var id) ? id : (uint)MaterialId;
-            }
+                ApplyNodeTransforms = CFG.Current.HavokEditor_CollisionGen_Flver_ApplyNodeTransforms,
+                WeldVertices = CFG.Current.HavokEditor_CollisionGen_Flver_WeldVertices,
+                WeldTolerance = CFG.Current.HavokEditor_CollisionGen_Flver_WeldTolerance,
+                RemoveDegenerateTriangles = CFG.Current.HavokEditor_CollisionGen_Flver_RemoveDegenerates,
+                RemoveInvalidGeometry = CFG.Current.HavokEditor_CollisionGen_Flver_RemoveInvalidGeometry,
+                DefaultMaterialId = (uint)MaterialId,
+                SelectedMeshIndices = selectedMeshIndices
+            };
 
-            (verts, indices) = HavokShapeGenerator.GenerateFlverCollision(flver, selectedMeshIndices, materials, MeshMaterial);
-            triangleMaterials = materials;
+            var geom = SelectionMenu.SourceFlver != null
+                ? ModelCollisionExtractor.ExtractFromFlver(SelectionMenu.SourceFlver, options)
+                : ModelCollisionExtractor.ExtractFromFlver0(SelectionMenu.SourceFlver0, options);
+
+            LastStats = geom.Stats;
+            verts = geom.Vertices;
+            indices = geom.Indices;
+            triangleMaterials = geom.TriangleMaterials;
         }
         else if (TargetShape is CollisionGeneratorShape.OBJ)
         {
@@ -669,17 +753,22 @@ public class CollisionGeneratorTool
             if (selectedGroupIndices.Count == 0)
                 return false;
 
-            // A group whose material is named hkm_Name_Property gets that collision material
-            var obj = SourceObj;
-            var materials = new List<uint>();
-            uint GroupMaterial(int groupIndex)
+            var options = new ModelCollisionExtractionOptions
             {
-                return HavokCollisionMaterials.TryParse(obj.Groups[groupIndex].Material, out var id) ? id : (uint)MaterialId;
-            }
+                ObjectTransform = GetObjToGameTransform(),
+                WeldVertices = CFG.Current.HavokEditor_CollisionGen_Flver_WeldVertices,
+                WeldTolerance = CFG.Current.HavokEditor_CollisionGen_Flver_WeldTolerance,
+                RemoveDegenerateTriangles = CFG.Current.HavokEditor_CollisionGen_Flver_RemoveDegenerates,
+                RemoveInvalidGeometry = CFG.Current.HavokEditor_CollisionGen_Flver_RemoveInvalidGeometry,
+                DefaultMaterialId = (uint)MaterialId,
+                SelectedMeshIndices = selectedGroupIndices
+            };
 
-            (verts, indices) = HavokShapeGenerator.GenerateObjCollision(obj, selectedGroupIndices,
-                GetObjToGameTransform(), materials, GroupMaterial);
-            triangleMaterials = materials;
+            var geom = ModelCollisionExtractor.ExtractFromObj(SourceObj, options);
+            LastStats = geom.Stats;
+            verts = geom.Vertices;
+            indices = geom.Indices;
+            triangleMaterials = geom.TriangleMaterials;
         }
 
         if (verts == null || indices == null || verts.Count == 0 || indices.Count == 0)
@@ -703,16 +792,25 @@ public class CollisionGeneratorTool
             CollisionGeneratorShape.Triangle => $"{TriangleInputs.Size}",
             CollisionGeneratorShape.Circle => $"{CircleInputs.Radius}/{CircleInputs.Segments}",
             CollisionGeneratorShape.SemiCircle => $"{SemiCircleInputs.Radius}/{SemiCircleInputs.Segments}",
-            CollisionGeneratorShape.FLVER => SelectionMenu.SourceFlver == null
+            CollisionGeneratorShape.FLVER => !SelectionMenu.HasSourceModel
                 ? ""
-                : $"{SelectionMenu.FlverPath}/{RuntimeHelpers.GetHashCode(SelectionMenu.SourceFlver)}/" +
-                  string.Concat(SelectionMenu.FlverMeshSelection.Select(s => s ? '1' : '0')),
+                : $"{SelectionMenu.FlverPath}/{SelectionMenu.MeshCount}/" +
+                  string.Concat(SelectionMenu.FlverMeshSelection.Select(s => s ? '1' : '0')) +
+                  $"/{CFG.Current.HavokEditor_CollisionGen_Flver_ApplyNodeTransforms}" +
+                  $"/{CFG.Current.HavokEditor_CollisionGen_Flver_WeldVertices}" +
+                  $"/{CFG.Current.HavokEditor_CollisionGen_Flver_WeldTolerance}" +
+                  $"/{CFG.Current.HavokEditor_CollisionGen_Flver_RemoveDegenerates}" +
+                  $"/{CFG.Current.HavokEditor_CollisionGen_Flver_RemoveInvalidGeometry}",
             CollisionGeneratorShape.OBJ => SourceObj == null
                 ? ""
                 : $"{ObjPath}/{RuntimeHelpers.GetHashCode(SourceObj)}/" +
                   string.Concat(ObjGroupSelection.Select(s => s ? '1' : '0')) +
                   $"/{CFG.Current.HavokEditor_CollisionGen_Obj_ForwardAxis}/{CFG.Current.HavokEditor_CollisionGen_Obj_UpAxis}" +
-                  $"/{CFG.Current.HavokEditor_CollisionGen_Obj_MirrorX}{CFG.Current.HavokEditor_CollisionGen_Obj_MirrorY}{CFG.Current.HavokEditor_CollisionGen_Obj_MirrorZ}",
+                  $"/{CFG.Current.HavokEditor_CollisionGen_Obj_MirrorX}{CFG.Current.HavokEditor_CollisionGen_Obj_MirrorY}{CFG.Current.HavokEditor_CollisionGen_Obj_MirrorZ}" +
+                  $"/{CFG.Current.HavokEditor_CollisionGen_Flver_WeldVertices}" +
+                  $"/{CFG.Current.HavokEditor_CollisionGen_Flver_WeldTolerance}" +
+                  $"/{CFG.Current.HavokEditor_CollisionGen_Flver_RemoveDegenerates}" +
+                  $"/{CFG.Current.HavokEditor_CollisionGen_Flver_RemoveInvalidGeometry}",
             _ => ""
         };
 
@@ -778,6 +876,18 @@ public class CollisionGeneratorTool
         if (Preview != null)
         {
             GUI.WrappedText(LOC.Get("HAVOK_CollisionGen_Preview_Triangle_Count", Preview.TriangleCount));
+
+            if (LastStats != null && (TargetShape is CollisionGeneratorShape.FLVER or CollisionGeneratorShape.OBJ))
+            {
+                ImGui.Spacing();
+                ImGui.TextDisabled("Extraction Statistics:");
+                ImGui.BulletText($"Vertices: {LastStats.ExtractedVerticesCount} (welded: {LastStats.DuplicateVerticesWeldedCount})");
+                ImGui.BulletText($"Triangles: {LastStats.ExtractedTrianglesCount} (degenerates removed: {LastStats.DegenerateTrianglesCount})");
+                if (LastStats.InvalidVerticesCount > 0 || LastStats.InvalidTrianglesCount > 0)
+                {
+                    ImGui.BulletText($"Invalid Geometry Discarded: {LastStats.InvalidTrianglesCount} tris");
+                }
+            }
         }
     }
 

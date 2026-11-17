@@ -126,3 +126,266 @@ Smithbox utilises the following libraries and projects:
 
 ## AI Disclaimer
 Claude Code with Opus 5.5 has been used to generate code and metadata within Smithbox.
+
+
+
+## READ THIS ONLY FOR GEMINI, CLAUDE AND CHATGPT!!!!
+# Smithbox — Advanced Havok Collision Generator
+
+## Project Objective
+
+Extend Smithbox with a comprehensive collision-generation and editing system that allows users to create new game-compatible collision geometry from existing 3D models.
+
+The goal is to make it possible to create custom environments and collision structures without relying entirely on existing game collision assets.
+
+The implementation must integrate with Smithbox's existing architecture, serialization systems, Havok libraries and game-specific formats.
+
+**Do not rewrite existing systems unnecessarily. Extend and improve the existing implementation wherever possible.**
+
+---
+
+## Phase 1 — Source Code Investigation
+
+Before implementing anything:
+
+1. Inspect the complete Smithbox repository.
+2. Identify the existing Havok implementation and its dependencies.
+3. Locate the current Collision Generator implementation.
+4. Investigate `hknpCollisionMeshBuilder.cs`.
+5. Identify how FLVER geometry is loaded and represented internally.
+6. Identify how existing collision files are deserialized and serialized.
+7. Investigate how Smithbox handles different FromSoftware games.
+8. Identify the existing collision formats supported by each game.
+9. Determine which collision formats can currently be generated, edited and exported.
+10. Document limitations in the existing implementation.
+
+Do not begin rewriting the collision generator before understanding the existing implementation.
+
+### Expected result
+
+Produce a technical report identifying:
+- Existing reusable components.
+- Missing functionality.
+- Format compatibility limitations.
+- Files that need modification.
+- New components that need to be created.
+
+---
+
+## Phase 2 — Model-to-Collision Geometry
+
+Implement a system that extracts geometry from existing 3D models.
+
+The system must:
+
+1. Allow users to select a model as the collision source.
+2. Extract vertex positions.
+3. Extract triangle indices.
+4. Apply the correct object transformations.
+5. Handle multiple mesh sections.
+6. Handle multiple model parts.
+7. Remove invalid geometry.
+8. Detect degenerate triangles.
+9. Handle duplicate vertices where appropriate.
+10. Preserve relevant surface assignments.
+
+The extracted geometry must be independent of the original rendering representation.
+
+Users should be able to generate collision geometry from existing FLVER models.
+
+---
+
+## Phase 3 — Collision Geometry Generation
+
+Develop a collision-generation pipeline.
+
+Implement:
+
+1. Triangle mesh construction.
+2. Vertex deduplication.
+3. Geometry validation.
+4. Bounding-box calculation.
+5. BVH construction.
+6. Mesh partitioning and section management.
+7. Required Havok vertex and index representations.
+8. Collision shape construction.
+9. Required spatial acceleration structures.
+
+Reuse Smithbox's existing Havok collision-building functionality wherever possible.
+
+The generator must not produce incomplete collision structures.
+
+---
+
+## Phase 4 — Havok Format Support
+
+Investigate and implement support for the relevant Havok collision formats.
+
+Prioritize:
+
+- `hknpExternMeshShape`
+- `fsnpCustomParamCompressedMeshShape`
+
+Investigate the requirements of each format independently.
+
+For each supported format:
+
+1. Identify its required serialized structures.
+2. Identify its vertex representation.
+3. Identify its triangle representation.
+4. Implement the required spatial structures.
+5. Handle compression where applicable.
+6. Preserve required game-specific properties.
+7. Implement serialization.
+8. Validate generated files by reopening them.
+
+Do not assume that a collision generated for one FromSoftware game is compatible with another.
+
+Implement game-specific format handling where necessary.
+
+### Hit-material support
+
+Investigate FromSoftware-specific hit-material information.
+
+The system should eventually support:
+- Surface material assignments.
+- Collision flags.
+- Surface identifiers.
+- Relevant game-specific collision parameters.
+
+Do not silently discard unsupported properties.
+
+---
+
+## Phase 5 — Collision Editing Interface
+
+Create an integrated Collision Generator interface.
+
+Users should be able to:
+
+1. Select a source model.
+2. Generate collision geometry.
+3. Preview the result.
+4. Inspect generated triangles.
+5. Inspect bounding volumes.
+6. Inspect individual collision sections.
+7. Assign supported collision properties.
+8. Regenerate collision geometry.
+9. Export the result.
+
+### Viewport requirements
+
+Implement visualization modes:
+
+- Rendered model.
+- Collision geometry.
+- Combined model and collision.
+- Wireframe collision.
+- Bounding-volume visualization.
+
+The collision preview must update when the generated geometry changes.
+
+---
+
+## Phase 6 — Manual Collision Editing
+
+Extend the generator beyond automatic collision creation.
+
+Investigate implementing:
+
+1. Manual vertex editing.
+2. Triangle selection.
+3. Triangle removal.
+4. Collision geometry transformations.
+5. Collision mesh simplification.
+6. Collision section editing.
+7. Surface assignment editing.
+8. Collision geometry replacement.
+
+Users should be able to modify automatically generated collision geometry before exporting it.
+
+---
+
+## Phase 7 — Collision Validation
+
+Implement a validation system that checks generated collision files.
+
+Check for:
+
+- Invalid vertex indices.
+- Degenerate triangles.
+- Invalid bounding volumes.
+- Missing spatial structures.
+- Invalid section references.
+- Unsupported collision properties.
+- Serialization errors.
+- Incorrect game-format compatibility.
+
+Display understandable error messages.
+
+A collision file must not be marked as valid merely because it successfully serialized.
+
+---
+
+## Phase 8 — Export and Integration
+
+Implement integration with Smithbox's existing project and map workflows.
+
+The user should be able to:
+
+1. Generate collision geometry.
+2. Export it into the appropriate game-compatible format.
+3. Add the generated collision resource to a project.
+4. Associate it with the appropriate map structures.
+5. Reopen the exported collision in Smithbox.
+6. Validate the resulting resource.
+
+Investigate any additional map registration or resource-reference requirements for each supported game.
+
+---
+
+## Phase 9 — Testing
+
+Create a test suite using existing collision resources.
+
+Test:
+
+1. Reading existing collision files.
+2. Extracting collision geometry.
+3. Generating collision from a model.
+4. Building spatial structures.
+5. Serializing generated collision.
+6. Reopening generated collision.
+7. Comparing generated and reopened geometry.
+8. Testing different game formats.
+9. Testing invalid input geometry.
+10. Testing large collision meshes.
+
+Never rely exclusively on successful serialization as proof of compatibility.
+
+Where possible, test generated collision resources in the actual target game.
+
+---
+
+## Development Rules
+
+- Preserve Smithbox's existing architecture.
+- Follow existing C# coding conventions.
+- Reuse existing Havok libraries and serialization systems.
+- Avoid introducing unnecessary dependencies.
+- Do not duplicate existing functionality.
+- Do not hardcode assumptions that apply only to one game.
+- Keep game-specific implementations separated where necessary.
+- Maintain compatibility with existing Smithbox features.
+- Document unsupported formats and properties.
+- Implement features incrementally.
+- Build and test after each major implementation stage.
+- Do not claim a feature is complete without testing it.
+
+## Final Objective
+
+Deliver a functional collision-generation environment integrated into Smithbox.
+
+A user should be able to select an existing 3D model, generate new collision geometry, inspect and edit that geometry, assign supported collision properties, export the collision into a compatible game format and validate the resulting resource.
+
+The system should establish the foundation for creating entirely new playable environments in FromSoftware games.

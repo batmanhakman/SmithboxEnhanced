@@ -129,7 +129,8 @@ public static class HavokShapeGenerator
     }
 
     /// <summary>
-    /// Collects the triangles of the given FLVER meshes, welding vertices at the same position. If
+    /// Collects the triangles of the given FLVER meshes, applying node transformations, validating geometry,
+    /// removing degenerate triangles, and welding vertices at the same position. If
     /// <paramref name="triangleMaterials"/> is given, it receives the collision material of each triangle, from
     /// <paramref name="meshMaterial"/> by mesh index.
     /// </summary>
@@ -139,61 +140,66 @@ public static class HavokShapeGenerator
         List<uint> triangleMaterials = null,
         Func<int, uint> meshMaterial = null)
     {
-        var vertices = new List<Vector3>();
-        var indices = new List<int>();
-
         if (model == null || model.Meshes == null || model.Meshes.Count == 0)
         {
-            return (vertices, indices);
+            return (new List<Vector3>(), new List<int>());
         }
 
-        IEnumerable<int> targetIndices = meshIndices ?? Enumerable.Range(0, model.Meshes.Count);
-
-        var weldMap = new Dictionary<Vector3, int>();
-
-        // Allocated once and reused for every triangle: stack memory from stackalloc is only freed when the method
-        // returns, so allocating it per triangle overflowed the stack on large models
-        Span<int> triIndices = stackalloc int[3];
-
-        foreach (int meshIndex in targetIndices)
+        var options = new ModelCollisionExtractionOptions
         {
-            if (meshIndex < 0 || meshIndex >= model.Meshes.Count)
-                continue;
+            ApplyNodeTransforms = true,
+            WeldVertices = true,
+            RemoveDegenerateTriangles = true,
+            RemoveInvalidGeometry = true,
+            SelectedMeshIndices = meshIndices,
+            CustomMaterialResolver = meshMaterial != null ? (idx, _) => meshMaterial(idx) : null
+        };
 
-            var mesh = model.Meshes[meshIndex];
-            var faces = mesh.GetFaces();
+        var geom = ModelCollisionExtractor.ExtractFromFlver(model, options);
 
-            foreach (var tri in faces)
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    Vector3 pos = tri[i].Position;
-
-                    if (!weldMap.TryGetValue(pos, out int vertIndex))
-                    {
-                        vertIndex = vertices.Count;
-                        vertices.Add(pos);
-                        weldMap[pos] = vertIndex;
-                    }
-
-                    triIndices[i] = vertIndex;
-                }
-
-                if (triIndices[0] == triIndices[1]
-                    || triIndices[1] == triIndices[2]
-                    || triIndices[2] == triIndices[0])
-                {
-                    continue;
-                }
-
-                indices.Add(triIndices[0]);
-                indices.Add(triIndices[1]);
-                indices.Add(triIndices[2]);
-                triangleMaterials?.Add(meshMaterial?.Invoke(meshIndex) ?? 0);
-            }
+        if (triangleMaterials != null)
+        {
+            triangleMaterials.Clear();
+            triangleMaterials.AddRange(geom.TriangleMaterials);
         }
 
-        return (vertices, indices);
+        return (geom.Vertices, geom.Indices);
+    }
+
+    /// <summary>
+    /// Collects the triangles of the given FLVER0 meshes (e.g. Demon's Souls), applying node transformations,
+    /// validating geometry, removing degenerate triangles, and welding vertices.
+    /// </summary>
+    public static (List<Vector3> Vertices, List<int> Indices) GenerateFlver0Collision(
+        FLVER0 model,
+        IReadOnlyList<int> meshIndices = null,
+        List<uint> triangleMaterials = null,
+        Func<int, uint> meshMaterial = null)
+    {
+        if (model == null || model.Meshes == null || model.Meshes.Count == 0)
+        {
+            return (new List<Vector3>(), new List<int>());
+        }
+
+        var options = new ModelCollisionExtractionOptions
+        {
+            ApplyNodeTransforms = true,
+            WeldVertices = true,
+            RemoveDegenerateTriangles = true,
+            RemoveInvalidGeometry = true,
+            SelectedMeshIndices = meshIndices,
+            CustomMaterialResolver = meshMaterial != null ? (idx, _) => meshMaterial(idx) : null
+        };
+
+        var geom = ModelCollisionExtractor.ExtractFromFlver0(model, options);
+
+        if (triangleMaterials != null)
+        {
+            triangleMaterials.Clear();
+            triangleMaterials.AddRange(geom.TriangleMaterials);
+        }
+
+        return (geom.Vertices, geom.Indices);
     }
 
     /// <summary>

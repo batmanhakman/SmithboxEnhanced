@@ -1499,6 +1499,14 @@ public class CFG
     public ModelExportAxis HavokEditor_CollisionGen_Obj_ForwardAxis = ModelExportAxis.PosZ;
     public ModelExportAxis HavokEditor_CollisionGen_Obj_UpAxis = ModelExportAxis.PosY;
 
+    // Model-to-Collision extraction options
+    public bool HavokEditor_CollisionGen_Flver_ApplyNodeTransforms = true;
+    public bool HavokEditor_CollisionGen_Flver_WeldVertices = true;
+    public float HavokEditor_CollisionGen_Flver_WeldTolerance = 0.0001f;
+    public bool HavokEditor_CollisionGen_Flver_RemoveDegenerates = true;
+    public bool HavokEditor_CollisionGen_Flver_RemoveInvalidGeometry = true;
+    public bool HavokEditor_CollisionGen_Show_Extraction_Options = false;
+
     #endregion
 
     #region Viewport
