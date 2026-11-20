@@ -91,7 +91,7 @@ public static class MapConnections_NR
         Dictionary<string, TileDefinition> dungeonOffsets = new();
 
 
-        IReadOnlyDictionary<string, Param> loadedParams = view.Project.Handler.ParamData.PrimaryBank.Params;
+        IReadOnlyDictionary<string, Param> loadedParams = view.Project.Handler.ParamData?.PrimaryBank?.Params;
         // Do not explicitly check ParamBank's game type here, but fail gracefully if the param does not exist
         if (loadedParams == null || !loadedParams.TryGetValue("WorldMapLegacyConvParam", out Param convParam))
         {

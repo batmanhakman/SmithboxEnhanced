@@ -2795,7 +2795,7 @@ public class ParamBank : IDisposable
 
     private Dictionary<string, HashSet<Param.Row>> GetParamDiff(ParamBank otherBank)
     {
-        if (otherBank == null)
+        if (otherBank?._params == null)
         {
             return null;
         }
@@ -3023,12 +3023,12 @@ public class ParamBank : IDisposable
     #region Dispose
     public void Dispose()
     {
-        _params.Clear();
+        _params?.Clear();
         _params = null;
 
         EnemyParam = null;
 
-        ClipboardRows.Clear();
+        ClipboardRows?.Clear();
         ClipboardRows = null;
     }
     #endregion

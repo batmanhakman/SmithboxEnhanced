@@ -71,23 +71,27 @@ public static class ParamLocator
 
     public static string GetParamdefDir(ProjectEntry project)
     {
-        var srcFolder = GetParamAssetsDir(project);
+        var defaultDir = Path.Join(AppContext.BaseDirectory, GetParamAssetsDir(project), "Defs");
 
 #if DEBUG
-        if (CFG.Current.Developer_Enable_Tools)
+        if (CFG.Current.Developer_Enable_Tools && !string.IsNullOrWhiteSpace(CFG.Current.Developer_Smithbox_Build_Folder))
         {
-            srcFolder = Path.Join(CFG.Current.Developer_Smithbox_Build_Folder, $@"\src\Smithbox.Data\Assets\PARAM\{ProjectUtils.GetGameDirectory(project)}");
+            var devDir = Path.Join(CFG.Current.Developer_Smithbox_Build_Folder, "src", "Smithbox.Data", "Assets", "PARAM", ProjectUtils.GetGameDirectory(project), "Defs");
+            if (Directory.Exists(devDir))
+            {
+                return devDir;
+            }
         }
 #endif
 
-        return Path.Join(srcFolder, "Defs");
+        return defaultDir;
     }
 
     public static string GetParammetaDir(ProjectEntry project)
     {
         var srcFolder = GetParamAssetsDir(project);
 
-        return Path.Join(srcFolder, "Meta");
+        return Path.Join(srcFolder, "Param Meta");
     }
 
     public static string GetMassEditScriptCommonDir()

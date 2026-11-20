@@ -386,6 +386,12 @@ public class ParamData : IDisposable
         ParamTypeInfo.Exceptions = new();
 
         var dir = ParamLocator.GetParamdefDir(Project);
+        if (!Directory.Exists(dir))
+        {
+            Smithbox.LogError(this, $"Paramdef directory not found: {dir}");
+            return false;
+        }
+
         var files = Directory.GetFiles(dir, "*.xml");
         List<(string, PARAMDEF)> defPairs = new();
 
@@ -551,18 +557,43 @@ public class ParamData : IDisposable
         }
     }
 
+    /// <summary>
+    /// Returns the developer build asset folder when developer tools are enabled and the folder exists;
+    /// otherwise returns <paramref name="defaultFolder"/>.
+    /// </summary>
+    private string ResolveDeveloperAssetFolder(string defaultFolder, string subFolder, string subChild = null)
+    {
+#if DEBUG
+        if (CFG.Current.Developer_Enable_Tools && !string.IsNullOrWhiteSpace(CFG.Current.Developer_Smithbox_Build_Folder))
+        {
+            var devFolder = Path.Join(
+                CFG.Current.Developer_Smithbox_Build_Folder,
+                "src", "Smithbox.Data", "Assets", "PARAM",
+                ProjectUtils.GetGameDirectory(Project),
+                subFolder);
+
+            if (!string.IsNullOrEmpty(subChild))
+            {
+                devFolder = Path.Join(devFolder, subChild);
+            }
+
+            if (Directory.Exists(devFolder))
+            {
+                return devFolder;
+            }
+        }
+#endif
+
+        return defaultFolder;
+    }
+
     public async Task<bool> SetupParamMeta()
     {
         await Task.Yield();
 
-        var rootMetaDir = Path.Join(AppContext.BaseDirectory, "Assets", "PARAM", ProjectUtils.GetGameDirectory(Project), "Param Meta");
-
-#if DEBUG
-        if (CFG.Current.Developer_Enable_Tools)
-        {
-            rootMetaDir = Path.Join(CFG.Current.Developer_Smithbox_Build_Folder, $@"\src\Smithbox.Data\Assets\PARAM\{ProjectUtils.GetGameDirectory(Project)}\Param Meta");
-        }
-#endif
+        var rootMetaDir = ResolveDeveloperAssetFolder(
+            Path.Join(AppContext.BaseDirectory, "Assets", "PARAM", ProjectUtils.GetGameDirectory(Project), "Param Meta"),
+            "Param Meta");
 
         var projectMetaDir = Path.Join(Project.Descriptor.ProjectPath, ".smithbox", "Assets", "PARAM", ProjectUtils.GetGameDirectory(Project), "Param Meta");
 
@@ -638,14 +669,10 @@ public class ParamData : IDisposable
             var paramList = new ParamAnnotationList();
             ParamAnnotations.Entries.Add(lang, paramList);
 
-            var sourceFolder = Path.Join(AppContext.BaseDirectory, "Assets", "PARAM", ProjectUtils.GetGameDirectory(Project.Descriptor.ProjectType), "Param Annotations", lang.Folder);
-
-#if DEBUG
-            if (CFG.Current.Developer_Enable_Tools)
-            {
-                sourceFolder = Path.Join(CFG.Current.Developer_Smithbox_Build_Folder, $@"\src\Smithbox.Data\Assets\PARAM\{ProjectUtils.GetGameDirectory(Project)}\Param Annotations", lang.Folder);
-            }
-#endif
+            var sourceFolder = ResolveDeveloperAssetFolder(
+                Path.Join(AppContext.BaseDirectory, "Assets", "PARAM", ProjectUtils.GetGameDirectory(Project.Descriptor.ProjectType), "Param Annotations", lang.Folder),
+                "Param Annotations",
+                lang.Folder);
 
             if (Path.Exists(sourceFolder))
             {
@@ -743,14 +770,9 @@ public class ParamData : IDisposable
 
         if (!CFG.Current.Param_Editor_Enable_Param_Enum_Override)
         {
-            var sourceFolder = Path.Join(AppContext.BaseDirectory, "Assets", "PARAM", ProjectUtils.GetGameDirectory(Project.Descriptor.ProjectType), "Param Enums");
-
-#if DEBUG
-            if (CFG.Current.Developer_Enable_Tools)
-            {
-                sourceFolder = Path.Join(CFG.Current.Developer_Smithbox_Build_Folder, $@"\src\Smithbox.Data\Assets\PARAM\{ProjectUtils.GetGameDirectory(Project)}\Param Enums");
-            }
-#endif
+            var sourceFolder = ResolveDeveloperAssetFolder(
+                Path.Join(AppContext.BaseDirectory, "Assets", "PARAM", ProjectUtils.GetGameDirectory(Project.Descriptor.ProjectType), "Param Enums"),
+                "Param Enums");
             if (Path.Exists(sourceFolder))
             {
                 foreach (var entry in Directory.EnumerateFiles(sourceFolder))
@@ -792,15 +814,18 @@ public class ParamData : IDisposable
             {
                 var fileName = Path.Combine(projectFolder, $"Annotations.json");
 
-                var file = File.ReadAllText(fileName);
+                if (File.Exists(fileName))
+                {
+                    var file = File.ReadAllText(fileName);
 
-                try
-                {
-                    GraphAnnotations = JsonSerializer.Deserialize(file, ParamEditorJsonSerializerContext.Default.GraphAnnotations);
-                }
-                catch (Exception e)
-                {
-                    Smithbox.LogError(this, LOC.Get("PARAM_Data_Log_Failed_Deseralize_Graph_Annotation", file), LogPriority.High, e);
+                    try
+                    {
+                        GraphAnnotations = JsonSerializer.Deserialize(file, ParamEditorJsonSerializerContext.Default.GraphAnnotations);
+                    }
+                    catch (Exception e)
+                    {
+                        Smithbox.LogError(this, LOC.Get("PARAM_Data_Log_Failed_Deseralize_Graph_Annotation", file), LogPriority.High, e);
+                    }
                 }
             }
         }
@@ -813,15 +838,18 @@ public class ParamData : IDisposable
             {
                 var fileName = Path.Combine(sourceFolder, $"Annotations.json");
 
-                var file = File.ReadAllText(fileName);
+                if (File.Exists(fileName))
+                {
+                    var file = File.ReadAllText(fileName);
 
-                try
-                {
-                    GraphAnnotations = JsonSerializer.Deserialize(file, ParamEditorJsonSerializerContext.Default.GraphAnnotations);
-                }
-                catch (Exception e)
-                {
-                    Smithbox.LogError(this, LOC.Get("PARAM_Data_Log_Failed_Deseralize_Graph_Annotation", file), LogPriority.High, e);
+                    try
+                    {
+                        GraphAnnotations = JsonSerializer.Deserialize(file, ParamEditorJsonSerializerContext.Default.GraphAnnotations);
+                    }
+                    catch (Exception e)
+                    {
+                        Smithbox.LogError(this, LOC.Get("PARAM_Data_Log_Failed_Deseralize_Graph_Annotation", file), LogPriority.High, e);
+                    }
                 }
             }
         }
@@ -843,43 +871,44 @@ public class ParamData : IDisposable
             {
                 var fileName = Path.Combine(projectFolder, $"Annotations.json");
 
-                var file = File.ReadAllText(fileName);
+                if (File.Exists(fileName))
+                {
+                    var file = File.ReadAllText(fileName);
 
-                try
-                {
-                    RowFmgAnnotations = JsonSerializer.Deserialize(file, ParamEditorJsonSerializerContext.Default.RowFmgAnnotations);
-                }
-                catch (Exception e)
-                {
-                    Smithbox.LogError(this, LOC.Get("PARAM_Data_Log_Failed_Deseralize_Row_FMG_Annotation", file), LogPriority.High, e);
+                    try
+                    {
+                        RowFmgAnnotations = JsonSerializer.Deserialize(file, ParamEditorJsonSerializerContext.Default.RowFmgAnnotations);
+                    }
+                    catch (Exception e)
+                    {
+                        Smithbox.LogError(this, LOC.Get("PARAM_Data_Log_Failed_Deseralize_Row_FMG_Annotation", file), LogPriority.High, e);
+                    }
                 }
             }
         }
 
         if (!CFG.Current.Param_Editor_Enable_Row_FMG_Annotation_Override)
         {
-            var sourceFolder = Path.Join(AppContext.BaseDirectory, "Assets", "PARAM", ProjectUtils.GetGameDirectory(Project.Descriptor.ProjectType), "Row FMG Annotations");
-
-#if DEBUG
-            if (CFG.Current.Developer_Enable_Tools)
-            {
-                sourceFolder = Path.Join(CFG.Current.Developer_Smithbox_Build_Folder, $@"\src\Smithbox.Data\Assets\PARAM\{ProjectUtils.GetGameDirectory(Project)}\Row FMG Annotations");
-            }
-#endif
+            var sourceFolder = ResolveDeveloperAssetFolder(
+                Path.Join(AppContext.BaseDirectory, "Assets", "PARAM", ProjectUtils.GetGameDirectory(Project.Descriptor.ProjectType), "Row FMG Annotations"),
+                "Row FMG Annotations");
 
             if (Path.Exists(sourceFolder))
             {
                 var fileName = Path.Combine(sourceFolder, $"Annotations.json");
 
-                var file = File.ReadAllText(fileName);
+                if (File.Exists(fileName))
+                {
+                    var file = File.ReadAllText(fileName);
 
-                try
-                {
-                    RowFmgAnnotations = JsonSerializer.Deserialize(file, ParamEditorJsonSerializerContext.Default.RowFmgAnnotations);
-                }
-                catch (Exception e)
-                {
-                    Smithbox.LogError(this, LOC.Get("PARAM_Data_Log_Failed_Deseralize_Row_FMG_Annotation", file), LogPriority.High, e);
+                    try
+                    {
+                        RowFmgAnnotations = JsonSerializer.Deserialize(file, ParamEditorJsonSerializerContext.Default.RowFmgAnnotations);
+                    }
+                    catch (Exception e)
+                    {
+                        Smithbox.LogError(this, LOC.Get("PARAM_Data_Log_Failed_Deseralize_Row_FMG_Annotation", file), LogPriority.High, e);
+                    }
                 }
             }
         }
@@ -922,13 +951,9 @@ public class ParamData : IDisposable
 
         if (!CFG.Current.Param_Editor_Enable_Icon_Configuration_Override)
         {
-            var sourceFolder = Path.Join(AppContext.BaseDirectory, "Assets", "PARAM", ProjectUtils.GetGameDirectory(Project.Descriptor.ProjectType), "Icon Configurations");
-#if DEBUG
-            if (CFG.Current.Developer_Enable_Tools)
-            {
-                sourceFolder = Path.Join(CFG.Current.Developer_Smithbox_Build_Folder, $@"\src\Smithbox.Data\Assets\PARAM\{ProjectUtils.GetGameDirectory(Project)}\Icon Configurations");
-            }
-#endif
+            var sourceFolder = ResolveDeveloperAssetFolder(
+                Path.Join(AppContext.BaseDirectory, "Assets", "PARAM", ProjectUtils.GetGameDirectory(Project.Descriptor.ProjectType), "Icon Configurations"),
+                "Icon Configurations");
 
             if (Path.Exists(sourceFolder))
             {
@@ -1393,6 +1418,9 @@ public class ParamData : IDisposable
         var metaDir = ParamLocator.GetParammetaDir(Project);
         var rootDir = Path.Combine(AppContext.BaseDirectory, metaDir);
         var projectDir = Path.Join(Project.Descriptor.ProjectPath, ".smithbox", metaDir);
+
+        if (!Directory.Exists(rootDir))
+            return;
 
         if (!Directory.Exists(projectDir))
         {

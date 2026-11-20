@@ -1368,7 +1368,7 @@ public class MsbEntity : Entity
             for (int i = 0; i < count; i++)
             {
                 var fieldName = $"modelDispMask{i}";
-                if (Convert.ToBoolean((byte)row[fieldName]!.Value.Value))
+                if (row[fieldName] is { } cell && Convert.ToBoolean(cell.Value))
                     enabledMasks[i] = 1;
             }
             return enabledMasks;
@@ -1377,20 +1377,19 @@ public class MsbEntity : Entity
         ParamEditorScreen paramEditor = null;
         var curProjectType = ProjectType.Undefined;
 
-        if (Owner is MapUniverse)
+        if (Owner is MapUniverse curOwner)
         {
-            var curOwner = (MapUniverse)Owner;
-
             curProjectType = curOwner.Project.Descriptor.ProjectType;
-            paramEditor = curOwner.Project.Handler.ParamEditor;
+            paramEditor = curOwner.Project.Handler?.ParamEditor;
         }
 
         if (paramEditor == null)
             return null;
 
-        if (paramEditor.Project.Handler.ParamData.PrimaryBank.Params.ContainsKey("NpcParam"))
+        var loadedParams = paramEditor.Project?.Handler?.ParamData?.PrimaryBank?.Params;
+
+        if (loadedParams != null && loadedParams.TryGetValue("NpcParam", out var npcParam) && npcParam != null)
         {
-            var npcParam = paramEditor.Project.Handler.ParamData.PrimaryBank.Params?["NpcParam"];
 
             switch (curProjectType)
             {

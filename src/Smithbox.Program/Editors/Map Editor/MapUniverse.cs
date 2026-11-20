@@ -142,7 +142,7 @@ public class MapUniverse : IUniverse
 
         if (View.Project.Descriptor.ProjectType is ProjectType.DS2S or ProjectType.DS2)
         {
-            if (Project.Handler.ParamEditor == null)
+            if (Project.Handler.ParamEditor == null || Project.Handler.ParamData?.PrimaryBank?.Params == null)
             {
                 Smithbox.LogError(this, LOC.Get("MAP_Universe_Log_DS2_Params_Not_Ready_for_Map"));
                 return false;
@@ -1046,6 +1046,14 @@ public class MapUniverse : IUniverse
 
     public void LoadDS2Generators(string mapid, MapContainer map)
     {
+        var loadedParams = Project.Handler.ParamData?.PrimaryBank?.Params;
+        if (loadedParams == null)
+        {
+            Smithbox.LogError(this, LOC.Get("MAP_Universe_Log_DS2_Params_Not_Ready_for_Map"));
+            map.DS2GeneratorsLoaded = false;
+            return;
+        }
+
         Dictionary<long, Param.Row> registParams = new();
         Dictionary<long, MergedParamRow> generatorParams = new();
         Dictionary<long, Entity> generatorObjs = new();
@@ -1055,7 +1063,7 @@ public class MapUniverse : IUniverse
         var paramNames = new[] { "generatorregistparam", "generatorlocation", "generatorparam",
             "eventparam", "eventlocation", "mapobjectinstanceparam" };
 
-        var missing = paramNames.Where(p => !Project.Handler.ParamData.PrimaryBank.Params.ContainsKey($"{p}_{mapid}")).ToList();
+        var missing = paramNames.Where(p => !loadedParams.ContainsKey($"{p}_{mapid}")).ToList();
 
         if (missing.Count > 0)
         {
@@ -1070,7 +1078,7 @@ public class MapUniverse : IUniverse
         // (SerializeDS2*) and refuses to write until they are made unique
         var duplicateIds = new List<string>();
 
-        Param regparam = Project.Handler.ParamData.PrimaryBank.Params[$"generatorregistparam_{mapid}"];
+        Param regparam = loadedParams[$"generatorregistparam_{mapid}"];
         foreach (Param.Row row in regparam.Rows)
         {
             if (string.IsNullOrEmpty(row.Name))
@@ -1087,7 +1095,7 @@ public class MapUniverse : IUniverse
             map.AddObject(obj);
         }
 
-        Param locparam = Project.Handler.ParamData.PrimaryBank.Params[$"generatorlocation_{mapid}"];
+        Param locparam = loadedParams[$"generatorlocation_{mapid}"];
         foreach (Param.Row row in locparam.Rows)
         {
             if (string.IsNullOrEmpty(row.Name))
@@ -1115,7 +1123,7 @@ public class MapUniverse : IUniverse
         }
 
         HashSet<ResourceDescriptor> chrsToLoad = new();
-        Param genparam = Project.Handler.ParamData.PrimaryBank.Params[$"generatorparam_{mapid}"];
+        Param genparam = loadedParams[$"generatorparam_{mapid}"];
         foreach (Param.Row row in genparam.Rows)
         {
             if (row.Name == null || row.Name == "")
@@ -1185,7 +1193,7 @@ public class MapUniverse : IUniverse
             }
         }
 
-        Param evtparam = Project.Handler.ParamData.PrimaryBank.Params[$"eventparam_{mapid}"];
+        Param evtparam = loadedParams[$"eventparam_{mapid}"];
         foreach (Param.Row row in evtparam.Rows)
         {
             if (string.IsNullOrEmpty(row.Name))
@@ -1197,7 +1205,7 @@ public class MapUniverse : IUniverse
             map.AddObject(obj);
         }
 
-        Param evtlparam = Project.Handler.ParamData.PrimaryBank.Params[$"eventlocation_{mapid}"];
+        Param evtlparam = loadedParams[$"eventlocation_{mapid}"];
         foreach (Param.Row row in evtlparam.Rows)
         {
             if (string.IsNullOrEmpty(row.Name))
@@ -1217,7 +1225,7 @@ public class MapUniverse : IUniverse
             mesh.SetSelectable(obj);
         }
 
-        Param objparam = Project.Handler.ParamData.PrimaryBank.Params[$"mapobjectinstanceparam_{mapid}"];
+        Param objparam = loadedParams[$"mapobjectinstanceparam_{mapid}"];
         foreach (Param.Row row in objparam.Rows)
         {
             if (string.IsNullOrEmpty(row.Name))
