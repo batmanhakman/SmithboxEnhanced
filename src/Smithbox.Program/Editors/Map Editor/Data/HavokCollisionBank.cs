@@ -846,14 +846,25 @@ public class HavokCollisionBank
 
         var sample = existing.FirstOrDefault();
 
-        if (sample == null)
-        {
-            Smithbox.LogError(this, LOC.Get("MAP_Data_Failed_Write_HKXBND", GetBinderKey(mapId, type)));
-            return false;
-        }
+        string folder;
+        DCX.Type compression;
+        Binder.FileFlags flags;
+        DCX.Type compressionType;
 
-        var folder = sample.Name.Split('\\')[0];
-        DCX.Decompress(sample.Bytes, out DCX.Type compression);
+        if (sample != null)
+        {
+            folder = sample.Name.Split('\\')[0];
+            DCX.Decompress(sample.Bytes, out compression);
+            flags = sample.Flags;
+            compressionType = sample.CompressionType;
+        }
+        else
+        {
+            folder = $"{type}{mapId.Substring(1)}";
+            compression = GetDefaultCollisionDcxType(Project.Descriptor.ProjectType);
+            flags = Binder.FileFlags.Flag1;
+            compressionType = DCX.Type.None;
+        }
 
         foreach (var name in pending)
         {
@@ -872,9 +883,9 @@ public class HavokCollisionBank
                 var bytes = DCX.Compress(Havok.Files.HavokFile.Write(document), compression);
                 var id = binderFiles.Count == 0 ? 0 : binderFiles.Max(f => f.ID) + 1;
 
-                binderFiles.Add(new BinderFile(sample.Flags, id, $"{folder}\\{name}", bytes)
+                binderFiles.Add(new BinderFile(flags, id, $"{folder}\\{name}", bytes)
                 {
-                    CompressionType = sample.CompressionType
+                    CompressionType = compressionType
                 });
 
                 NewFiles.Remove(name);
@@ -889,6 +900,16 @@ public class HavokCollisionBank
         }
 
         return success;
+    }
+
+    private static DCX.Type GetDefaultCollisionDcxType(ProjectType projectType)
+    {
+        return projectType switch
+        {
+            ProjectType.AC6 => DCX.Type.DCX_KRAK_MAX,
+            ProjectType.NR or ProjectType.DB_NT or ProjectType.DB => DCX.Type.DCX_DFLT_11000_44_9_15,
+            _ => DCX.Type.DCX_DFLT_10000_44_9
+        };
     }
 
     /// <summary>
@@ -1026,9 +1047,42 @@ public class HavokCollisionBank
 
         var (bhdPath, bdtPath) = GetBinderPaths(mapId, type);
 
-        // Not every map has every collision type, so a missing binder is not a failure
+        // If the binder doesn't exist yet on disk/VFS, create a new empty BXF4 when new files are queued for it
         if (!Project.VFS.FS.FileExists(bdtPath) || !Project.VFS.FS.FileExists(bhdPath))
-            return true;
+        {
+            var hasPendingNew = NewFiles.Any(e => e.Value.MapId == mapId && e.Value.Type == type);
+            if (!hasPendingNew || IsBxf3Game || Project.Descriptor.ProjectType is ProjectType.SDT)
+                return true;
+
+            try
+            {
+                var freshBinder = new BXF4
+                {
+                    Version = "07D7R6",
+                    Format = Binder.Format.IDs | Binder.Format.Names1 | Binder.Format.Names2 | Binder.Format.Compression,
+                    Unicode = true,
+                    Extended = 4,
+                    PadHeaderEnd = true
+                };
+
+                var anyCreated = false;
+                var ok = AddNewFiles(freshBinder.Files, mapId, type, ref anyCreated);
+
+                if (anyCreated)
+                {
+                    freshBinder.Write(out byte[] newBhdBytes, out byte[] newBdtBytes);
+                    Project.VFS.ProjectFS.WriteFile(bhdPath, newBhdBytes);
+                    Project.VFS.ProjectFS.WriteFile(bdtPath, newBdtBytes);
+                }
+
+                return ok;
+            }
+            catch (Exception e)
+            {
+                Smithbox.LogError(this, LOC.Get("MAP_Data_Failed_Write_HKXBND", bdtPath), e);
+                return false;
+            }
+        }
 
         try
         {

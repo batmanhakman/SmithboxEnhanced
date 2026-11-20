@@ -1633,6 +1633,7 @@ public class CFG
     public Vector3 Viewport_Navmesh_Color = new Vector3(157, 53, 255);
     public Vector3 Viewport_Navmesh_Gate_Color = new Vector3(50, 220, 0);
     public float Viewport_Collision_Opacity = 1.0f;
+    public bool Viewport_Collision_Wireframe = false;
 
     // The bake of the irradiance volumes to light maps with (AC6, ER, NR), the NN of mAA_BB_CC_DD_envmap_NN
     public int Viewport_GI_Bake = 0;

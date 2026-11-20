@@ -59,6 +59,12 @@ public class MapListView : IActionEventHandler
     private readonly Dictionary<MapContentLoadState, int> _filteredEntriesKey = new();
     private int _listVersion;
 
+    public void RefreshMapList()
+    {
+        _updateMapList = true;
+        _listVersion++;
+    }
+
     public void ClearMapList()
     {
         FilteredMapList.Clear();

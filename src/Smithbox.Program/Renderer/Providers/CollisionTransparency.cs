@@ -10,8 +10,9 @@ namespace StudioCore.Renderer;
 /// </summary>
 public static class CollisionTransparency
 {
-    // What the pipelines were last built for, so they can be rebuilt once the opacity crosses over
+    // What the pipelines were last built for, so they can be rebuilt once the opacity or wireframe state changes
     private static bool? _wasTransparent;
+    private static bool? _wasWireframe;
 
     /// <summary>
     ///     Below full opacity the meshes stop writing depth, so that their own hidden faces show through.
@@ -32,19 +33,22 @@ public static class CollisionTransparency
     public static void Refresh()
     {
         var transparent = IsTransparent;
+        var wireframe = CFG.Current.Viewport_Collision_Wireframe;
 
         if (_wasTransparent == null)
         {
             _wasTransparent = transparent;
+            _wasWireframe = wireframe;
             return;
         }
 
-        if (_wasTransparent == transparent)
+        if (_wasTransparent == transparent && _wasWireframe == wireframe)
         {
             return;
         }
 
         _wasTransparent = transparent;
+        _wasWireframe = wireframe;
         MeshProviderCache.RebuildCollisionRenderables();
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Hexa.NET.ImGui;
 using StudioCore.Application;
 using StudioCore.Editors.Common;
+using StudioCore.Editors.MapEditor.DS3Creator;
 using StudioCore.Editors.Viewport;
 using StudioCore.Keybinds;
 using StudioCore.Renderer;
@@ -152,6 +153,7 @@ public class MapEditorView : IEditorView
     public EntryFileListTool EntryFileListTool;
     public PartsTokenIdListTool PartsTokenIdListTool;
     public WorldReloaderTool WorldReloaderTool;
+    public DS3MapCreatorTool DS3MapCreatorTool;
 
     public ResourceListTool ResourceListTool;
 
@@ -267,6 +269,7 @@ public class MapEditorView : IEditorView
         EntryFileListTool = new EntryFileListTool(this, project);
         PartsTokenIdListTool = new PartsTokenIdListTool(this, project);
         WorldReloaderTool = new WorldReloaderTool(this, project);
+        DS3MapCreatorTool = new DS3MapCreatorTool(this, project);
 
         ResourceListTool = new ResourceListTool();
 
@@ -300,6 +303,7 @@ public class MapEditorView : IEditorView
         SnapToMeshAction.Update();
 
         WorldMapTool.Update();
+        DS3MapCreatorTool.Update();
 
         // Picks up a finished first person collision build, and checks the walk is still where it can run
         FirstPersonCollision.Update();
@@ -390,6 +394,8 @@ public class MapEditorView : IEditorView
             // Tools
             ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
             ImGui.SetNextWindowClass(ref GUI.DockGroup_MapEditorView);
+            if (DS3MapCreatorTool.FocusRequested)
+                ImGui.SetNextWindowFocus();
             if (ImGui.Begin($@"{LOC.Get("MAP_Window_Tools")}##mapEditor_ToolWindow_{viewIndex}", GUI.GetInnerWindowFlags()))
             {
                 var width = ImGui.GetContentRegionAvail().X;
@@ -490,7 +496,8 @@ public class MapEditorView : IEditorView
 
             if (CFG.Current.Interface_MapEditor_ToolWindow)
             {
-                if (ImGui.BeginTabItem(LOC.Get("MAP_Window_Tools")))
+                var toolsTabFlags = DS3MapCreatorTool.FocusRequested ? ImGuiTabItemFlags.SetSelected : ImGuiTabItemFlags.None;
+                if (ImGui.BeginTabItem(LOC.Get("MAP_Window_Tools"), toolsTabFlags))
                 {
                     FocusManager.SetFocus(EditorFocusContext.MapEditor_Tools);
 

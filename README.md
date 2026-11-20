@@ -1,391 +1,179 @@
-# Smithbox
-Smithbox is a modding tool for Elden Ring, Elden Ring: Nightreign, Armored Core VI, Sekiro, Dark Souls 3, Dark Souls 2, Dark Souls 1, Bloodborne, and Demon's Souls.
+# Smithbox — Dark Souls 3 Custom Map Creation Suite (Master Spec & State Tracker)
 
-[![GitHub release](https://img.shields.io/github/release/vawser/Smithbox.svg)](https://github.com/vawser/Smithbox/releases/latest)
-[![Github All Releases](https://img.shields.io/github/downloads/vawser/Smithbox/total.svg)](https://github.com/vawser/Smithbox/releases/latest)
-[![Smithbox Discord](https://img.shields.io/badge/Discord%20-%237289DA.svg?&logo=discord&logoColor=white)](https://discord.gg/5p9bRKkK4J)
-
-## Key Features
-- **Map Editor**: a visual editor for editing maps.
-- **Model Editor**: a model editor for viewing and editing models. Similar to the FLVER Editor.
-- **Param Editor**: a table editor for editing parameters, which contain most of the data that defines each game.
-- **Text Editor**: an editor for editing text localization.
-- **Graphics Param Editor**: an editor for editing GPARAM files.
-- **Material Editor**: an editor for editing MTD and MATBIN materials.
-- **Texture Viewer**: a simple to use viewer for looking and extracting textures.
-- **File Browser**: a browser of the files contained within the data directory, plus the project directory. Allows easy extraction.
-- **Havok Editor**: an editor for editing HKX files. Supports ER and NR projects only.
-- **Time Act Editor**: an editor for editing TAE files. Includes animation playback.
-
-You no longer need to unpack a game for any of the editors.
-
-## Usage
-Once installed, click the **Smithbox.Vulkan.exe** to launch the fully featured version of Smithbox.
-
-If your computer cannot use Vulkan (old graphics card), you should use **Smithbox.OpenGL.exe**. 
-This provides most of the features of Smithbox, except for anything to do with the viewport, which mostly affects the Map and Model Editor.
-
-## Links
-Smithbox is a fork of the [DSMapStudio repository](https://github.com/soulsmods/DSMapStudio).
-
-### Smithbox Tutorials
-You can find helpful information and guides/tutorials about Smithbox at [soulsmodding.com](https://www.soulsmodding.com/doku.php?id=smithbox).
-
-### Unpacking Files
-If you want to unpack games files, you should use [Nuxe](https://github.com/JKAnderson/Nuxe/releases).
-
-### Scripts
-If you want to edit EMEVD scripts, you should use [DarkScript3](https://github.com/AinTunez/DarkScript3).
-
-If you want to edit ESD scripts, you should use [ESDLang](https://github.com/thefifthmatt/ESDLang) or [ESDStudio](https://github.com/GompDS/ESDStudio) if you want a GUI interface.
-
-## License
-Smithbox is licensed under the [GNU General Public License v3.0 or later](LICENSE).
-
-Smithbox is a fork of DSMapStudio, whose code (Copyright (c) 2018 Katalash, Meowmaritus) is used under the MIT License. Third-party components and their licenses are listed in [Licenses](src/Smithbox.Data/Licenses), which is also included in each release.
-
-Smithbox does not include Oodle. Projects for games that use it copy `oo2core` from the game folder automatically.
-
-## Support
-If you enjoy Smithbox, feel free to support me (Vawser) via [Ko-fi](https://ko-fi.com/vawser)!
-
-## Troubleshooting
-### My game is telling me there is a 'Save Corruption' error when I launch my mod.
-
-This is an issue with your mod launch setup. For most modern games, it is recommended that you use [ME3](https://github.com/garyttierney/me3) to launch your mods. Smithbox has support for creating a ME3 profile built-in.
-
-For DS1, DS2 and pre 1.15.2 DS3, you will still need to use ModEngine2 or other mod launching solutions. In this case, you typically need to run the game with vanilla once when creating a new character. And then enable any mods. 
-
-### Smithbox starts and then immediately closes
-
-This is likely due to your graphics card lacking support for Vulkan. By default Smithbox will launch and try and use the Vulkan backend. 
-
-If this occurs, you can go to %AppData%\Local\Smithbox\Configuration, open the Configuration.json file with a text editor, and then change the System_RenderingBackend variable to 0. This will make Smithbox use the OpenGL backend, which is supported by almost all graphics cards (however it will disable viewport functionality).
-
-### Smithbox displays an error message box when I do X action
-
-If you experience a crash, please report it to the [Smithbox Discord](https://discord.gg/5p9bRKkK4J) or post the error message in the Issues tab in this repository. This will help me find and fix the causes of such crashes.
-
-### How do I use the latest build of Smithbox
-
-To download the latest build of Smithbox, outside of the official releases, click on the green tick next to the latest commit when viewing the repository. Click on Details, and then on Summary. Scroll down, and you will see a link starting with: Smithbox-SHA, click on it to download the latest  build. 
-
-Note: you will need a Github account to be able to navigate into the Github Actions page and download the build.
-
-The latest build may be incomplete, as it is the in-development build of Smithbox, but it does allow you to immediately benefit from new additions and changes, whereas the official builds are only created when a substantial amount of changes has been finished.
-
-## Credits (Smithbox)
-* Vawser 
-* ivi 
-* nex3 
-* gixxpunk 
-* Strackeror 
-* FireWolf700 
-* GoogleBen 
-* LordExelot 
-* Pear0533 
-* Metito 
-* WarpZehpyr 
-* twistedgwazi 
-* FeeeeK 
-* colaaaaaa123 
-* alson041 
-* gracenotes 
-
-## Credits (DSMapStudio)
-* Katalash
-* philiquaz
-* george
-* thefifthmatt
-* TKGP
-* Nordgaren
-* [Pav](https://github.com/JohrnaJohrna)
-* [Meowmaritus](https://github.com/meowmaritus)
-* [PredatorCZ](https://github.com/PredatorCZ)
-* [Horkrux](https://github.com/horkrux)
-* Shadowth117
-
-## Libraries
-Smithbox utilises the following libraries and projects:
-* [SoulsFormats](https://github.com/JKAnderson/SoulsFormats) - Credit to TKGP
-* [SoapstoneLib](https://github.com/soulsmods/SoapstoneLib) - Credit to gracenotes
-* [HKLib](https://github.com/The12thAvenger/HKLib) - Credit to The12thAvenger
-* [Hexa.NET.ImGui](https://github.com/HexaEngine/Hexa.NET.ImGui) - Credit to JunaMeinhold
-* [Tracy Profiler](https://github.com/wolfpld/tracy)
-* [Veldrid](https://github.com/veldrid/veldrid)
-
-## Requirements
-* Windows 7/8/8.1/10/11 (64-bit only)
-* [Visual C++ Redistributable x64](https://aka.ms/vs/16/release/vc_redist.x64.exe)
-* For the error message "You must install or update .NET to run this application", use these exact download links. It is not enough to install the default .NET runtime.
-  * [Microsoft .NET Core 7.0 Desktop Runtime](https://aka.ms/dotnet/7.0/windowsdesktop-runtime-win-x64.exe)
-  * [Microsoft .NET Core 7.0 ASP.NET Core Runtime](https://aka.ms/dotnet/7.0/aspnetcore-runtime-win-x64.exe)
-* A Vulkan 1.3 compatible graphics card with up to date graphics drivers: NVIDIA Maxwell (900 series) and newer or AMD Polaris (Radeon 400 series) and newer.
-* Intel GPUs currently don't seem to be working properly. At the moment you will need a dedicated NVIDIA or AMD GPU.
-* A 4GB (8GB recommended) of VRAM if modding DS3/BB/Sekiro/ER maps due to huge map sizes.
-
-## AI Disclaimer
-Claude Code with Opus 5.5 has been used to generate code and metadata within Smithbox.
-
-
-
-## READ THIS ONLY FOR GEMINI, CLAUDE AND CHATGPT!!!!
-# Smithbox — Advanced Havok Collision Generator
-
-## Project Objective
-
-Extend Smithbox with a comprehensive collision-generation and editing system that allows users to create new game-compatible collision geometry from existing 3D models.
-
-The goal is to make it possible to create custom environments and collision structures without relying entirely on existing game collision assets.
-
-The implementation must integrate with Smithbox's existing architecture, serialization systems, Havok libraries and game-specific formats.
-
-**Do not rewrite existing systems unnecessarily. Extend and improve the existing implementation wherever possible.**
+> **Instructions for AI Orchestrator (Gemini Neon):**
+> This document is the single source of truth for building a complete **Dark Souls 3 (DS3) Custom Map Creation Suite** inside Smithbox.
+> 1. **Update the Live State Tracker** below after every completed task, build check, or discovered blocker.
+> 2. **Follow Vertical Slices strictly.** Do not start Milestone $N+1$ until Milestone $N$ builds cleanly and passes its Verification Gate.
+> 3. **DS3-Only Scope.** Target Dark Souls 3 formats exclusively (`MSB3`, `FLVER2`, **Havok 2014 `hk_2014.1.0-r1` `hknp` 64-bit Packfile**, `EMEVD`, `NVA`, `GPARAM`). Do **not** build `TAG0`/Tagfile (Sekiro/ER/AC6 Havok 2016+) or legacy `hkp` (DS1/DS2) collision pipelines for DS3.
+> 4. **Extend, Don't Rewrite.** Reuse Smithbox's existing `SoulsFormats`, `Havok.*` unified library, `Veldrid`, `Hexa.NET.ImGui`, and Alias systems.
 
 ---
 
-## Phase 1 — Source Code Investigation
+## Live State Tracker
 
-Before implementing anything:
+| Field | Status |
+| :--- | :--- |
+| **Current Milestone** | Milestone 1 — Vertical Slice ("The Standing Box") — Implementation & headless tests complete; awaiting user's in-game ModEngine2 Verification Gate check |
+| **Active Task** | In-editor Smithbox & in-game Dark Souls 3 ModEngine2 Verification Gate (`m31_90_00_00` or selected test map slot) |
+| **Last Verified Build** | `dotnet build src\Smithbox.Vulkan\Smithbox.Vulkan.csproj --no-restore -v minimal` — 0 Errors; `dotnet test src\Smithbox.Tests.DS3Creator\Smithbox.Tests.DS3Creator.csproj --no-restore -v normal` — 12/12 Passed (2026-11-19) |
+| **Current Blockers** | `None` |
+| **Next Immediate Action** | Implement `StudioCore.Editors.MapEditor.DS3Creator`, build, and run headless `Smithbox.Tests.DS3Creator` suite. |
 
-1. Inspect the complete Smithbox repository.
-2. Identify the existing Havok implementation and its dependencies.
-3. Locate the current Collision Generator implementation.
-4. Investigate `hknpCollisionMeshBuilder.cs`.
-5. Identify how FLVER geometry is loaded and represented internally.
-6. Identify how existing collision files are deserialized and serialized.
-7. Investigate how Smithbox handles different FromSoftware games.
-8. Identify the existing collision formats supported by each game.
-9. Determine which collision formats can currently be generated, edited and exported.
-10. Document limitations in the existing implementation.
-
-Do not begin rewriting the collision generator before understanding the existing implementation.
-
-### Expected result
-
-Produce a technical report identifying:
-- Existing reusable components.
-- Missing functionality.
-- Format compatibility limitations.
-- Files that need modification.
-- New components that need to be created.
+### Progress Legend
+- `[ ]` Not started
+- `[~]` In progress
+- `[x]` Completed & verified
+- `[!]` Blocked (must document in **Decision & Blocker Log**)
 
 ---
 
-## Phase 2 — Model-to-Collision Geometry
+## Architecture & Scope Guardrails
 
-Implement a system that extracts geometry from existing 3D models.
-
-The system must:
-
-1. Allow users to select a model as the collision source.
-2. Extract vertex positions.
-3. Extract triangle indices.
-4. Apply the correct object transformations.
-5. Handle multiple mesh sections.
-6. Handle multiple model parts.
-7. Remove invalid geometry.
-8. Detect degenerate triangles.
-9. Handle duplicate vertices where appropriate.
-10. Preserve relevant surface assignments.
-
-The extracted geometry must be independent of the original rendering representation.
-
-Users should be able to generate collision geometry from existing FLVER models.
+1. **Havok Version Lock (Critical — Audited & Corrected in M0):** Dark Souls 3 uses **Havok 2014 (`hk_2014.1.0-r1`) 64-bit Little-Endian Packfiles** (`HavokContainer.Packfile`, `HeaderVersion = 11`, `PointerSize = 8`) containing **Havok New Physics (`hknp`)**: `hkRootLevelContainer` → `hknpPhysicsSceneData` → `hknpPhysicsSystemData` → `hknpBodyCinfo` → `Havok.hk2014.fsnpCustomParamCompressedMeshShape` inside `h*.hkx.dcx` (Hi-res) and `l*.hkx.dcx` (Lo-res) within `BXF4` `.hkxbhd`/`.hkxbdt` binders. *(Correction: DS3 does **not** use legacy `hkp` / `hkpBvCompressedMeshShape`—that is DES/DS1/DS1R/DS2S—and does **not** use `TAG0` Tagfiles—that is SDT/ER/AC6.)*
+2. **No Reinventing Blender:** Do **not** build manual vertex-pushing, sculpting, or mesh-editing tools inside Smithbox. Smithbox handles **blockout primitives, kitbashing, placement, property assignment, collision/navmesh generation, and export**.
+3. **In-Editor Workflow:** The user must be able to scaffold a new map, drag-and-drop assets, generate collision/navmesh, place cross-map enemies, and wire basic events **entirely inside Smithbox**.
+4. **Incremental Verification:** Every milestone ends with a concrete **Verification Gate** (unit/round-trip test + in-game DS3 test via ModEngine2). Never mark a milestone complete based solely on successful serialization.
+5. **Preserve Existing Smithbox Features:** Follow existing C# coding conventions and keep new DS3 map-creation modules cleanly separated under a dedicated namespace (`StudioCore.Editors.MapEditor.DS3Creator`).
 
 ---
 
-## Phase 3 — Collision Geometry Generation
+## Milestone 0 — Repository Investigation & Architecture Audit
 
-Develop a collision-generation pipeline.
+**Objective:** Map out Smithbox's existing DS3 capabilities before writing feature code.
 
-Implement:
+- [x] `M0.1` Inspect Smithbox's `MapEditor`, `ModelEditor`, `SoulsFormats` integration, and `Alias` system for DS3.
+- [x] `M0.2` Audit `Havok.*` / `SoulsFormats` support for **Havok 2014 (`hk_2014.1.0-r1`)** serialization/deserialization (verified pure-C# `Havok.Files.HavokFile` + `HavokPackfileSerializer` + `HavokCompressedMeshBuilder` + `HavokCompressedMeshGenerator_hk2014`; no external CLI wrapper needed).
+- [x] `M0.3` Inspect how Smithbox loads, renders (`Veldrid`), and saves DS3 `MSB3`, `FLVER2`, `TPF`, `GPARAM`, `BTL`, `luabnd`, `ffxbnd`, and `EMEVD`.
+- [x] `M0.4` Document findings in the **Architecture Audit Summary** section at the bottom of this file (reusable components, missing pieces, files to modify, new modules to create).
 
-1. Triangle mesh construction.
-2. Vertex deduplication.
-3. Geometry validation.
-4. Bounding-box calculation.
-5. BVH construction.
-6. Mesh partitioning and section management.
-7. Required Havok vertex and index representations.
-8. Collision shape construction.
-9. Required spatial acceleration structures.
-
-Reuse Smithbox's existing Havok collision-building functionality wherever possible.
-
-The generator must not produce incomplete collision structures.
+**Verification Gate:** Architecture Audit Summary is populated and existing Smithbox solution compiles cleanly (`Smithbox.Vulkan.csproj`: 0 Errors).
 
 ---
 
-## Phase 4 — Havok Format Support
+## Milestone 1 — Vertical Slice: "The Standing Box" (Map Scaffolder + DS3 Collision)
 
-Investigate and implement support for the relevant Havok collision formats.
+**Objective:** Prove the end-to-end DS3 map pipeline works in-game. A user can create a blank DS3 map inside Smithbox, place a primitive floor box, bake DS3 Havok 2014 collision, export, and physically stand on it in Dark Souls 3.
 
-Prioritize:
+### 1A. New DS3 Map Scaffolder
+- [x] `M1.1` Create a "New DS3 Map" wizard targeting a clean/test DS3 map slot (e.g., replacing an unused or selected map ID) inside the active project directory.
+- [x] `M1.2` Generate minimal valid boilerplate files: `MSB3` (with default player spawn), baseline `GPARAM` (visible lighting), empty `BTL`, and empty map/collision binders.
 
-- `hknpExternMeshShape`
-- `fsnpCustomParamCompressedMeshShape`
+### 1B. In-Editor Primitive Blockout
+- [x] `M1.3` Add a primitive spawner in the Map Editor viewport (Box/Floor, Wall, Ramp, Stairs) that generates valid DS3 `FLVER2` geometry with a default visible material/texture (`MTD`/`TPF`) and registers it as a `MapPiece` in `MSB3`.
 
-Investigate the requirements of each format independently.
+### 1C. DS3 Havok 2014 (`hknp`) Collision Pipeline
+- [x] `M1.4` Build geometry extractor: extract world-space vertices and triangle indices from selected `FLVER2` map pieces/primitives, deduplicate vertices, and strip degenerate triangles.
+- [x] `M1.5` Implement DS3 Havok 2014 collision builder: construct valid `hknp` (`fsnpCustomParamCompressedMeshShape` 64-bit Packfile) collision meshes (Hi-res `h*` and Lo-res `l*` `.hkx`) with valid bounding volumes, spatial acceleration, and default walkable hit-material flags.
+- [x] `M1.6` Auto-register generated collision parts in `MSB3` (including required `DrawGroups` / `DispGroups` so map geometry renders when standing on the collision).
+- [x] `M1.7` Add collision viewport visualization modes (Wireframe collision, Combined model + collision, Bounding volumes).
 
-For each supported format:
+### 1D. Validation & Round-Trip Testing
+- [x] `M1.8` Implement collision validator (checks degenerate triangles, invalid indices, missing spatial structures, and round-trip reload in Smithbox).
 
-1. Identify its required serialized structures.
-2. Identify its vertex representation.
-3. Identify its triangle representation.
-4. Implement the required spatial structures.
-5. Handle compression where applicable.
-6. Preserve required game-specific properties.
-7. Implement serialization.
-8. Validate generated files by reopening them.
-
-Do not assume that a collision generated for one FromSoftware game is compatible with another.
-
-Implement game-specific format handling where necessary.
-
-### Hit-material support
-
-Investigate FromSoftware-specific hit-material information.
-
-The system should eventually support:
-- Surface material assignments.
-- Collision flags.
-- Surface identifiers.
-- Relevant game-specific collision parameters.
-
-Do not silently discard unsupported properties.
+**Verification Gate (Pending In-Game Test):** Exported map loads in Dark Souls 3 via ModEngine2; player spawns, sees the lit primitive floor, walks on it without falling through, and camera collides properly.
 
 ---
 
-## Phase 5 — Collision Editing Interface
+## Milestone 2 — Global Asset Browser & Drag-and-Drop Kitbashing
 
-Create an integrated Collision Generator interface.
+**Objective:** Make Smithbox aware of all DS3 models with visual thumbnails, enabling Unity/Unreal-style drag-and-drop level building from across all vanilla DS3 maps.
 
-Users should be able to:
+### 2A. Global Asset Indexer
+- [ ] `M2.1` Build a background indexer that scans DS3's `map/`, `obj/`, and `chr/` archives (without requiring full game unpacking) and pairs model IDs with Smithbox's community Alias names and tags.
+- [ ] `M2.2` Save a fast, searchable local index filterable by **Category** (Map Pieces, Objects, Enemies), **Origin Map**, and **Search Text**.
 
-1. Select a source model.
-2. Generate collision geometry.
-3. Preview the result.
-4. Inspect generated triangles.
-5. Inspect bounding volumes.
-6. Inspect individual collision sections.
-7. Assign supported collision properties.
-8. Regenerate collision geometry.
-9. Export the result.
+### 2B. On-Demand Thumbnail Baker
+- [ ] `M2.3` Use Smithbox's existing `Veldrid` renderer with an offscreen camera to render 128×128 preview thumbnails on demand as the user scrolls, caching PNGs to disk.
 
-### Viewport requirements
+### 2C. Drag-and-Drop + Cross-Map Asset Copying
+- [ ] `M2.4` Implement ImGui drag-and-drop (`BeginDragDropSource` on Asset Browser tiles → `BeginDragDropTarget` on the 3D Map Viewport).
+- [ ] `M2.5` Implement viewport raycasting on drop to place the asset cleanly on existing terrain/collision (or a default ground plane).
+- [ ] `M2.6` Automate cross-map dependency copying: when dropping a `MapPiece` or `Object` from another DS3 map, automatically copy its `FLVER2` and required `TPF` textures into the target map's `mapbnd` and register `Model` + `Part` entries in `MSB3`.
 
-Implement visualization modes:
+### 2D. Hit-Material Assignment
+- [ ] `M2.7` Allow assigning DS3 surface/hit-material presets (Stone, Wood, Water, Killplane, Camera-Ignore) per mesh/selection before baking collision.
 
-- Rendered model.
-- Collision geometry.
-- Combined model and collision.
-- Wireframe collision.
-- Bounding-volume visualization.
-
-The collision preview must update when the generated geometry changes.
+**Verification Gate:** User drags a pillar from Lothric Castle and a statue from Irithyll into the custom map, bakes collision, and both render with textures and solid collision in-game.
 
 ---
 
-## Phase 6 — Manual Collision Editing
+## Milestone 3 — Navmesh & Cross-Map Enemy Importer
 
-Extend the generator beyond automatic collision creation.
+**Objective:** Allow dropping enemies from *any* DS3 area into the custom map with working pathfinding, AI scripts, and attack VFX.
 
-Investigate implementing:
+### 3A. Basic Navmesh (`NVA` / Havok AI) Generation
+- [ ] `M3.1` Implement a walkable-surface navmesh generator from the map's collision geometry (filtering by slope angle and agent height).
+- [ ] `M3.2` Export DS3-compatible navmesh data (`NVA` + Havok AI navmesh `.hkx`) and link it in `MSB3` so enemies can navigate the custom level.
 
-1. Manual vertex editing.
-2. Triangle selection.
-3. Triangle removal.
-4. Collision geometry transformations.
-5. Collision mesh simplification.
-6. Collision section editing.
-7. Surface assignment editing.
-8. Collision geometry replacement.
+### 3B. Cross-Map Enemy Importer
+- [ ] `M3.3` Automate `MSB3` enemy registration: add `Model.Enemy` + `Part.Enemy`, assign valid `NpcParamID` / `NpcThinkParamID`, link `CollisionName` for proper drawgroups, and clear conflicting source `EntityID`s.
+- [ ] `M3.4` **Lua AI Injection (`luabnd`):** Automatically locate and copy the enemy's AI Lua scripts from its origin map's `script/mXX_XX_XX_XX.luabnd.dcx` into the custom map's `luabnd` and update `luainfo`.
+- [ ] `M3.5` **SFX Merging (`ffxbnd`):** Copy the enemy's required particle effects from its origin map's `sfxbnd` into the custom map's `ffxbnd` so attacks, magic, and weapon trails render visibly.
 
-Users should be able to modify automatically generated collision geometry before exporting it.
+**Verification Gate:** User drags a Pontiff Knight and a Lothric Knight into the custom map; in-game, both render, patrol/chase the player across the custom navmesh, attack with visible VFX, and take/deal damage properly.
 
 ---
 
-## Phase 7 — Collision Validation
+## Milestone 4 — Visual Event Template Builder (`EMEVD`)
 
-Implement a validation system that checks generated collision files.
+**Objective:** Enable custom gameplay encounters (bosses, ambushes, doors, bonfires) without requiring the user to hand-code raw EMEVD scripts.
 
-Check for:
+- [ ] `M4.1` Implement `SoulsFormats.EMEVD` read/write integration for the custom map's `.emevd.dcx`.
+- [ ] `M4.2` Add Viewport-to-Event linking: placing `Region` trigger boxes, fog walls, levers, bonfires, or enemies auto-assigns unique, conflict-free `EntityID`s.
+- [ ] `M4.3` Build the **Visual Event Presets UI** with compilable DS3 event templates:
+  - **Boss Encounter:** Fog wall + Trigger Region + Boss HP bar + Music + Victory Flag + Item Reward.
+  - **Ambush / Spawn Trigger:** Player enters Region → Enable Enemy / Play animation.
+  - **Interactive Object:** Pull lever / open door → Set Event Flag + play object animation.
+  - **Bonfire & Warp:** Register a functional resting bonfire.
+- [ ] `M4.4` Ensure generated `.emevd.dcx` files remain clean and compatible with DarkScript3 for advanced manual editing.
 
-- Invalid vertex indices.
-- Degenerate triangles.
-- Invalid bounding volumes.
-- Missing spatial structures.
-- Invalid section references.
-- Unsupported collision properties.
-- Serialization errors.
-- Incorrect game-format compatibility.
-
-Display understandable error messages.
-
-A collision file must not be marked as valid merely because it successfully serialized.
+**Verification Gate:** Custom map features a working bonfire, a trigger-box ambush, and a functional boss encounter (fog wall enters, HP bar appears, victory clears fog wall and awards item).
 
 ---
 
-## Phase 8 — Export and Integration
+## Milestone 5 — Dark Souls 1 to Dark Souls 3 Enemy Porting Pipeline
 
-Implement integration with Smithbox's existing project and map workflows.
+**Objective:** Provide a guided, semi-automated DS1-to-DS3 enemy importer inside Smithbox, focusing on what can be reliably automated.
 
-The user should be able to:
+- [ ] `M5.1` **Model & Material Conversion:** Convert DS1 `FLVER2` meshes to DS3 `FLVER2`, remap DS1 `.mtd` shader paths to valid DS3 `.mtd` equivalents, and repack textures into DS3 `chrbnd.dcx` / `texbnd.dcx`.
+- [ ] `M5.2` **Animation & TAE Pipeline:** Integrate/invoke existing Havok 2010 → Havok 2014 conversion tooling for skeletons and animations; remap DS1 `TAE` animation IDs to DS3's layout, strip unsupported DS1 events, and remap sound event IDs.
+- [ ] `M5.3` **Param Scaffolding:** Auto-generate starter rows in `NpcParam`, `NpcThinkParam`, and `AtkParam_Npc` wired to the ported `cXXXX` ID.
+- [ ] `M5.4` **AI & VFX Fallbacks:** Attach a user-selectable DS3 AI template (e.g., *Generic Sword & Shield*, *Aggressive Beast*) instead of attempting raw DS1 Lua translation; map missing VFX to closest-match DS3 common effects (`ffxbnd`).
 
-1. Generate collision geometry.
-2. Export it into the appropriate game-compatible format.
-3. Add the generated collision resource to a project.
-4. Associate it with the appropriate map structures.
-5. Reopen the exported collision in Smithbox.
-6. Validate the resulting resource.
-
-Investigate any additional map registration or resource-reference requirements for each supported game.
+**Verification Gate:** A ported DS1 enemy (e.g., Hollow Soldier or Black Knight) spawns in the custom DS3 map with intact textures, working animations/hitboxes, and functional combat behavior via a DS3 AI template.
 
 ---
 
-## Phase 9 — Testing
+## Architecture Audit Summary (Populated in Milestone 0)
 
-Create a test suite using existing collision resources.
-
-Test:
-
-1. Reading existing collision files.
-2. Extracting collision geometry.
-3. Generating collision from a model.
-4. Building spatial structures.
-5. Serializing generated collision.
-6. Reopening generated collision.
-7. Comparing generated and reopened geometry.
-8. Testing different game formats.
-9. Testing invalid input geometry.
-10. Testing large collision meshes.
-
-Never rely exclusively on successful serialization as proof of compatibility.
-
-Where possible, test generated collision resources in the actual target game.
+- **Existing Reusable Components:**
+  - **Solution & Rendering (`Smithbox.Vulkan`, `Smithbox.Program`, `Smithbox.Data`, `Veldrid`, `Hexa.NET.ImGui`):** Full Vulkan viewport (`VulkanViewport`, `RenderScene`, `SceneRenderer`), material/shader pipeline (`FlverResource`, `MaterialBank`, `MaterialBinding`), collision mesh uploader (`HavokCollisionMeshBuilder`, `CollisionSubmeshProvider`, `CollisionTransparency`, `MeshProviderCache.RebuildCollisionRenderables`), and debug line batching (`DbgPrimLineBatch`, `DebugPrimitiveRenderableProxy` used by `NavigationOverlayRenderer`).
+  - **SoulsFormats (`src/Andre/SoulsFormats`):** Full read/write support for DS3 `MSB3` (`/map/mapstudio/{mapId}.msb.dcx`), `FLVER2` (version `0x20014`, inside `.mapbnd.dcx` `BND4` at `/map/{assetMapId}/{assetMapId}_{id6}.mapbnd.dcx`), `BXF4` (`h*.hkxbhd`/`.hkxbdt`, `l*.hkxbhd`/`.hkxbdt`), `TPF` (plus `/other/systex.tpf.dcx`), `BTL` (DS3 `Version = 6`, `LightSize = 0xC8`, `LongOffsets = true`), `GPARAM` (`GparamVersion.V3`, `WideStrings = true`, Yebis tonemapping), `NVA`, and `EMEVD` (plus existing `EmevdEditorScreen`, `NavigationTool` / `DotRecast`, `MapPiecePort`, `MapTextureTransfer`, `CollisionEditorTool`).
+  - **Unified Havok Library (`src/Havok/*`):** Pure-C# read/write support for Havok 2014 64-bit Packfiles (`HavokFile`, `HavokProfile.DS3`, `HavokPackfileSerializer`, `HavokTypeRegistry20140100.xml`), plus game-verified compressed mesh generation (`HavokCompressedMeshBuilder` + `HavokCompressedMeshGenerator_hk2014`) and FLVER geometry extraction (`ModelCollisionExtractor` + `CollisionFlverReader`).
+  - **DS3 Asset Conventions & Aliases:** Verified via `DS3-File-Dictionary.json`, `MapNames.json`, `PathBuilder.cs`, `ModelLocator.cs`, `TextureLocator.cs`, and `MsbGameAdapter.cs` (e.g., unused DS3 slots such as `m31_90_00_00`, `m32_90_00_00`, `m36_00_00_00`, `m30_02_00_00`, `m46_00_00_00`).
+- **Missing Functionality / Gaps Addressed in Milestone 1:**
+  - `CollisionEditorCreate` and `HavokCollisionBank.AddNewFiles` previously required an existing collision binder containing at least one `.hkx.dcx` template file and an existing `MSB3.Part.Collision` in the map—blocking blank/custom map workflows.
+  - No wizard existed to scaffold a clean DS3 map (`MSB3` player spawn, baseline visible `GPARAM`, empty `BTL`, empty `h`/`l` `BXF4` collision binders, starter geometry).
+  - No procedural `FLVER2` primitive blockout spawner or automated Havok 2014 packfile/mesh structural validator + wireframe/bounding-volume toggle existed for collisions.
+  - Legacy `Smithbox.Tests` targets `net9.0` with broken project references and hardcoded author drive paths; a clean `net10.0` `Smithbox.Tests.DS3Creator` xUnit test suite is added.
+- **Havok 2014 Strategy:**
+  - Use Smithbox's pure-C# **Havok 2014 (`hk_2014.1.0-r1`, `HavokSdk.Hk2014`, 64-bit LE Packfile)** pipeline (`HavokCompressedMeshBuilder` → `HavokCompressedMeshGenerator_hk2014.BuildCompressedMeshShape(..., Variant.DS3)` → `hkRootLevelContainer` / `hknpPhysicsSceneData` / `hknpPhysicsSystemData` / `hknpMaterial` / `hknpBodyCinfo` → `HavokFile.Write` + `DCX_DFLT_10000_44_9`). No external CLI or native Havok SDK binary is needed.
+- **Files to Modify:**
+  - `src\Smithbox.Program\Editors\Map Editor\Data\HavokCollisionBank.cs` (allow adding collision files to empty/new BXF4 binders without an existing template entry)
+  - `src\Smithbox.Program\Application\CFG.cs` (`Viewport_Collision_Wireframe`)
+  - `src\Smithbox.Program\Renderer\Providers\CollisionSubmeshProvider.cs` & `CollisionTransparency.cs` (wireframe pipeline support + rebuild detection)
+  - `src\Smithbox.Program\Editors\Map Editor\GUI\MapListView.cs` (`RefreshMapList()`), `MapEditorView.cs`, `MapToolWindow.cs`
+- **New Modules to Create:**
+  - Under `src\Smithbox.Program\Editors\Map Editor\Tools\DS3 Map Creator\` (`StudioCore.Editors.MapEditor.DS3Creator`): `DS3MapCreatorConstants.cs`, `DS3PrimitiveFlverBuilder.cs`, `DS3CollisionBuilder.cs`, `DS3CollisionValidator.cs`, `DS3MapScaffolder.cs`, `DS3CollisionOverlayRenderer.cs`, `DS3MapCreatorTool.cs`.
+  - Under `src\Smithbox.Tests.DS3Creator\`: `Smithbox.Tests.DS3Creator.csproj`, `DS3Milestone1Tests.cs`.
 
 ---
+## BONUS ** ONLY WHEN DONE **
+- **Make it able to create new map id meaning, the game can load custom map ids created by the player**
+## Decision & Blocker Log
 
-## Development Rules
-
-- Preserve Smithbox's existing architecture.
-- Follow existing C# coding conventions.
-- Reuse existing Havok libraries and serialization systems.
-- Avoid introducing unnecessary dependencies.
-- Do not duplicate existing functionality.
-- Do not hardcode assumptions that apply only to one game.
-- Keep game-specific implementations separated where necessary.
-- Maintain compatibility with existing Smithbox features.
-- Document unsupported formats and properties.
-- Implement features incrementally.
-- Build and test after each major implementation stage.
-- Do not claim a feature is complete without testing it.
-
-## Final Objective
-
-Deliver a functional collision-generation environment integrated into Smithbox.
-
-A user should be able to select an existing 3D model, generate new collision geometry, inspect and edit that geometry, assign supported collision properties, export the collision into a compatible game format and validate the resulting resource.
-
-The system should establish the foundation for creating entirely new playable environments in FromSoftware games.
+| Date | Milestone | Entry / Decision / Blocker | Resolution |
+| :--- | :--- | :--- | :--- |
+| 2026-11-19 | `M0` | **Havok 2014 Format Clarification:** Master spec Guardrail #1 initially cited `hkp` (`hkpBvCompressedMeshShape`) and warned against `fsnpCustomParamCompressedMeshShape`. Audit of `HavokProfile.DS3`, `HavokCompressedMeshGenerator_hk2014.cs`, `CollisionEditorShapes.cs`, and `hknpCollisionMeshBuilder.cs` confirms DS3 uses **Havok 2014 `hk_2014.1.0-r1` 64-bit Packfiles** with `hknp` (`fsnpCustomParamCompressedMeshShape`); `hkp` is only DES/DS1/DS1R/DS2S. | Updated Guardrail #1 and Architecture Audit Summary; implemented Milestone 1 with pure-C# `Havok.hk2014` `fsnpCustomParamCompressedMeshShape` packfile serialization. |
+| 2026-11-19 | `M0` | **Solution Build Target:** Building root `Smithbox.sln` stalls in `Smithbox.Release.csproj` (`AssembleRelease` copies thousands of output files). | Build `src\Smithbox.Vulkan\Smithbox.Vulkan.csproj --no-restore` (and `Smithbox.Tests.DS3Creator`) directly; passes with 0 errors. |
+| 2026-11-19 | `M1` | **Test Infrastructure:** Legacy `src\Smithbox.Tests\Smithbox.Tests.csproj` targets `net9.0`, references missing `Smithbox.csproj`, and hardcodes external local paths. | Created standalone `src\Smithbox.Tests.DS3Creator\Smithbox.Tests.DS3Creator.csproj` targeting `net10.0` with headless unit + round-trip tests (preserving `src\Smithbox.Tests`). |

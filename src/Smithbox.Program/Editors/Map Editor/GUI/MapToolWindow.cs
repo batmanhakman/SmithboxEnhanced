@@ -1,4 +1,5 @@
 ﻿using Hexa.NET.ImGui;
+using StudioCore.Editors.MapEditor.DS3Creator;
 using StudioCore.Editors.Viewport;
 using StudioCore.Keybinds;
 
@@ -30,6 +31,16 @@ public class MapToolWindow
         if (ImGui.BeginMenu("Tools"))
         {
             DataTransferTool.DisplayDropdown();
+
+            if (View.DS3MapCreatorTool.CanUse())
+            {
+                if (ImGui.MenuItem("DS3 Map Creator##ds3MapCreatorMenu"))
+                {
+                    CFG.Current.Interface_MapEditor_ToolWindow = true;
+                    View.DS3MapCreatorTool.RequestFocus();
+                }
+                GUI.Tooltip("Open and focus the DS3 Map Creator panel in the Tools window.");
+            }
 
             if (Project.Descriptor.ProjectType is ProjectType.ER 
                 or ProjectType.NR)
@@ -133,6 +144,20 @@ public class MapToolWindow
             if (ToolSections.Header($"{LOC.Get("MAP_CollisionEditor_Header")}##collisionEditorHeader"))
             {
                 View.CollisionEditorTool.OnToolWindow();
+            }
+        }
+
+        if (View.DS3MapCreatorTool.CanUse())
+        {
+            if (View.DS3MapCreatorTool.FocusRequested)
+            {
+                ToolSections.Focus();
+                View.DS3MapCreatorTool.FocusRequested = false;
+            }
+
+            if (ToolSections.Header("DS3 Map Creator##ds3MapCreatorHeader"))
+            {
+                View.DS3MapCreatorTool.OnToolWindow();
             }
         }
 

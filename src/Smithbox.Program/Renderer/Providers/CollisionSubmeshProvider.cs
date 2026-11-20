@@ -1,4 +1,5 @@
-﻿using Veldrid;
+﻿using StudioCore.Application;
+using Veldrid;
 using Veldrid.Utilities;
 using Vortice.Vulkan;
 
@@ -35,6 +36,11 @@ public class CollisionSubmeshProvider : MeshProvider
     public override SpecializationConstant[] SpecializationConstants => new SpecializationConstant[0];
 
     public override VkCullModeFlags CullMode => VkCullModeFlags.None;
+
+    public override VkPolygonMode FillMode =>
+        CFG.Current.Viewport_Collision_Wireframe && SceneRenderer.Device?.Features.FillModeWireframe == true
+            ? VkPolygonMode.Line
+            : VkPolygonMode.Fill;
 
     public override BlendStateDescription BlendState => CollisionTransparency.BlendState;
 
